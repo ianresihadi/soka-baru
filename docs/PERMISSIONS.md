@@ -54,4 +54,40 @@ Baseline:
 - `school_code` binds users to `school_id` during account creation or first login.
 - Subdomain-per-school is deferred.
 
-Final detailed permission rules should be expanded during Sprint 002 implementation.
+## Sprint 002 Implementation Status
+
+Implemented:
+
+- Membership/role model (`school_memberships` + `membership_roles`) supporting
+  multiple roles per user and future multi-school membership.
+- Server-side tenant resolution (`getActiveTenantContext`): `school_id` and
+  roles come only from membership rows, never from client input.
+- Tenant-aware repository functions in `packages/db/src/repositories.ts`. The
+  safe path requires a server-resolved `TenantContext`; `assertSameTenant`
+  rejects any client-supplied foreign `school_id` with `TenantViolationError`.
+- API middleware `requireAuth` / `requireMembership` / `requireRole`.
+- Public binding role guard: the session-only `POST /school-bindings/by-code`
+  endpoint only allows self-assigning roles in `SELF_BINDABLE_ROLES`
+  (`orang_tua` for Sprint 002). Privileged roles (`guru`, `wali_kelas`,
+  `admin_sekolah`, `kepala_sekolah`, `soka_internal`) cannot be self-assigned by
+  a client that knows a `school_code`; they are assigned only by seed/internal
+  code calling the repository directly, until an admin-controlled onboarding
+  path exists (Sprint 003). Even `orang_tua` self-binding will be tightened to
+  invitation/link codes later.
+- Automated tenant-isolation tests (`apps/api/src/__tests__/tenant.test.ts`),
+  including tests proving a client cannot self-assign `admin_sekolah` or
+  `soka_internal` (or smuggle a privileged role in a mixed array) through the
+  public endpoint.
+
+### Postgres RLS — Deferred (with reason)
+
+RLS is NOT implemented in Sprint 002. SOKA Baru does not use Supabase Auth, so
+RLS would not be auto-wired to JWT claims; binding a per-request tenant context
+through a pooled Neon connection (`SET LOCAL`) adds complexity and connection
+pool-leak risk that is not justified at the foundation stage. Tenant isolation
+is therefore enforced in the backend service/query layer and is covered by
+mandatory tests. RLS remains a future defense-in-depth option: it would add a
+second barrier at the database layer once a clean request→session→tenant
+context wiring exists. See `planning/DECISIONS.md` (2026-06-14).
+
+Final detailed permission rules should be expanded during later sprints.

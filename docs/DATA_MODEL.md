@@ -95,6 +95,36 @@ This supports cases like:
 - Parent who is also a teacher.
 - Parent with multiple children.
 
+## Implemented In Sprint 002
+
+Sprint 002 implemented the auth + tenant foundation only. Product tables
+(`students`, `classes`, `attendance_records`, etc.) are intentionally NOT yet
+created; they arrive with their owning sprints.
+
+Drizzle schema: `packages/db/src/schema.ts`. Generated SQL migration:
+`packages/db/migrations/0000_*.sql`.
+
+Better Auth tables (managed via the Drizzle adapter):
+
+- `user`, `session`, `account`, `verification`.
+
+SOKA foundation tables:
+
+| Table | Key fields | Notes |
+|---|---|---|
+| `schools` | `id` (uuid), `name`, `school_code` (unique), `status`, timestamps | Tenant boundary. |
+| `school_memberships` | `id` (uuid), `school_id` → `schools.id`, `user_id` → `user.id`, `status`, `joined_at`, timestamps | Unique `(school_id, user_id)` prevents duplicate memberships. |
+| `membership_roles` | `id` (uuid), `membership_id` → `school_memberships.id`, `role`, `created_at` | Unique `(membership_id, role)`. `role` is text validated by the shared `Role` enum. |
+
+Role values seeded as valid: `guru`, `wali_kelas`, `orang_tua`, `siswa`,
+`admin_sekolah`, `kepala_sekolah`, `soka_internal`. Only `guru`, `wali_kelas`,
+and `orang_tua` are active MVP product roles (`ACTIVE_MVP_ROLES` in
+`packages/shared`); `siswa` exists as a value with no MVP UI.
+
+The active tenant context (`school_id` + roles) is resolved server-side from
+`school_memberships`/`membership_roles` via `getActiveTenantContext`, never from
+client input.
+
 ## Parent-Student Linking
 
 Session 5 confirms parent-student links are created through school-controlled invitations or link codes.

@@ -36,6 +36,27 @@ SOKA Lama appears to use:
 
 This is reference context only. Supabase is not the SOKA Baru backend baseline.
 
+## Workspace Structure (Sprint 002)
+
+pnpm workspaces monorepo (no Turborepo/Nx yet — see `planning/DECISIONS.md`):
+
+```text
+apps/
+  api/        # Hono API: createApp factory, middleware, foundation routes
+  web/        # React/Vite/Tailwind minimal validation UI (Sprint 002 only)
+packages/
+  db/         # Drizzle schema, migrations, client, tenant-aware repositories, seed
+  auth/       # Better Auth config (email/password, Drizzle adapter)
+  shared/     # Role enum, shared types, zod validation schemas
+```
+
+Internal packages are consumed as TypeScript source (no build step); `tsx`,
+Vite, and Vitest transpile on the fly, and each package runs `tsc --noEmit`.
+
+Tenant isolation is enforced in the backend service/query layer. The active
+`school_id` is resolved server-side from membership data; handlers never trust a
+client-supplied `school_id`. Postgres RLS is deferred (see `docs/PERMISSIONS.md`).
+
 ## Architecture Decisions
 
 See `planning/DECISIONS.md`.

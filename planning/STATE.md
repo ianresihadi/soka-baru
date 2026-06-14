@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is ready for implementation planning with the approved stack baseline.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is implemented and validated; it awaits Architect review against `acceptance.md`.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Architect Layer: Sprint 002 ready for Builder implementation planning.
+Builder Layer: Sprint 002 Foundation Data/Auth implemented and validated. Pending Architect acceptance review before Sprint 003 is detailed.
 
 ## Recently Completed
 
@@ -102,12 +102,23 @@ Architect Layer: Sprint 002 ready for Builder implementation planning.
 - Created `planning/sprints/002-foundation-data-auth/claude-start-prompt.md` as the ready-to-paste Claude entry prompt for Sprint 002.
 - Updated `CLAUDE.md` so Claude starts from the runbook and active sprint handoff.
 
+## Sprint 002 Build Notes (Builder)
+
+- Scaffolded a pnpm monorepo: `apps/api` (Hono), `apps/web` (React/Vite/Tailwind validation UI), `packages/db` (Drizzle), `packages/auth` (Better Auth), `packages/shared` (roles/types/zod).
+- Drizzle schema + generated migration for Better Auth tables (`user`, `session`, `account`, `verification`) and SOKA foundation tables (`schools`, `school_memberships`, `membership_roles`).
+- Better Auth email/password wired via the Drizzle adapter against the shared Neon database.
+- `school_code` binding implemented (`POST /school-bindings/by-code` + `bindUserToSchoolByCode`); `school_id` derived server-side from the school lookup, not client input. The public endpoint only allows self-assigning non-privileged roles (`orang_tua`); privileged roles stay in seed/internal code.
+- Tenant isolation enforced in the service/query layer via `getActiveTenantContext`, tenant-aware repositories, `assertSameTenant`, and `requireAuth`/`requireMembership`/`requireRole` middleware.
+- Postgres RLS deferred with documented reason (see `docs/PERMISSIONS.md` and `planning/DECISIONS.md`).
+- Validation: 17 automated tests pass (in-process PGlite + real migrations), including proof that a client cannot self-assign privileged roles via the public binding endpoint; `pnpm typecheck` clean across all packages; `apps/web` builds.
+- Seed script for School A, School B, and a multi-role user (local-dev credentials only).
+
 ## Next Actions
 
-- Move to Claude for Sprint 002 Builder planning.
-- Have Claude produce the pre-edit implementation plan only.
-- Approve the plan directly or bring it back to Architect for review before Claude edits files.
+- Architect reviews Sprint 002 output against `planning/sprints/002-foundation-data-auth/acceptance.md`.
+- On acceptance, detail Sprint 003 Admin Onboarding Minimal (turn this foundation into real onboarding workflows: create school, import students, parent link codes, class/teacher assignment).
+- Optional follow-up: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` to exercise the full Better Auth HTTP flow end-to-end.
 
 ## Blockers
 
-- None currently.
+- None blocking. Note: the full Better Auth HTTP sign-in/session flow was not exercised against a live Postgres in this environment (no `DATABASE_URL`); the tenant/auth-membership logic is covered by in-process tests, and the live path is documented for verification.
