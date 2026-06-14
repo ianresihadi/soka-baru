@@ -31,6 +31,6 @@ Do not use this file as a dumping ground for project history or sprint details.
 
 ## Current Builder Entry Point
 
-For Sprint 006, start from:
+No active Builder sprint is approved right now.
 
-`planning/sprints/006-nilai-catatan/claude-start-prompt.md`
+The initial 001-006 roadmap is complete and merged. Wait for Architect to detail and approve Sprint 007 before implementation planning. Do not start Sprint 007 from chat context or memory; start only from the future `planning/sprints/007-*/claude-start-prompt.md` after it exists.

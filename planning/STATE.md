@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is implemented and validated; it awaits Architect review against `acceptance.md`.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Builder Layer: Sprint 006 Nilai & Catatan implemented and validated. Pending Architect acceptance review. Sprint 006 is the last sprint in the initial 001–006 roadmap.
+Architect checkpoint after the initial 001-006 roadmap. No active Builder sprint is approved right now. Claude should not begin Sprint 007 until Architect creates detailed sprint artifacts and Ian approves the handoff.
 
 ## Recently Completed
 
@@ -185,12 +185,20 @@ Builder Layer: Sprint 006 Nilai & Catatan implemented and validated. Pending Arc
 - Teacher/admin routes class-scoped (reuse `assertCanOperateClass`); parent routes session-only via `parent_student_links`. No client `school_id` trusted.
 - Minimal UI: teacher `TeacherGradesNotes` panel in Papan Pagi (grade/note entry + publish/unpublish); parent grades + published notes cards in `ParentHome`.
 - Validation: 100 tests pass (17 tenant + 25 onboarding + 20 daily-loop + 17 parent-trust + 21 academic-records); `pnpm typecheck` clean; `apps/web` builds. (Includes Architect PR #5 fixes: score≤maxScore validation, concurrency-safe publish.)
+- Architect accepted Sprint 006 after PR #5 merge. Re-review verified score/maxScore validation, concurrency-safe grade/note publish, 100 API tests, typecheck, and web build.
+
+## Architect Checkpoint 001-006
+
+- The core MVP foundation now exists in code: tenant-aware auth/membership, minimal onboarding, teacher daily loop, parent trust loop, and basic grades/qualitative notes.
+- The system has a useful test spine: 100 API tests cover tenant isolation, role guards, parent visibility boundaries, attendance correction, notification behavior, parent trust reads, grade publication, note publication, and concurrency-sensitive writes.
+- The product is not yet pilot-ready for a real school without another hardening sprint. Remaining gaps include live Neon/Better Auth HTTP verification, production environment setup, demo/seed flows, polished app shell/navigation, admin usability for setup, and deployment/CI smoke checks.
+- Recommended next direction: Sprint 007 should prioritize pilot readiness and app-shell consolidation before adding another broad product module.
 
 ## Next Actions
 
-- Architect reviews Sprint 006 output against `planning/sprints/006-nilai-catatan/acceptance.md`.
-- Sprint 006 completes the initial 001–006 roadmap; next sprint scope (007+) is an Architect decision.
-- Optional follow-up: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` to exercise the full Better Auth HTTP flow end-to-end.
+- Architect details Sprint 007 only after choosing the next track.
+- Recommended Sprint 007 track: Pilot Readiness & App Shell, focused on making the existing 001-006 functionality usable, demoable, and deployable for a first school pilot.
+- Optional verification before or inside Sprint 007: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` and exercise the full Better Auth HTTP flow end-to-end.
 
 ## Blockers
 

@@ -60,9 +60,9 @@ Move to Claude when all of these are true:
 - The stack and core business rules needed by the sprint are no longer open questions.
 - The Builder can implement without inventing product scope.
 
-For the current project state, Ian can move to Claude now for Sprint 006.
+For the current project state, Ian should stay with Architect.
 
-Sprint 006 is ready for Builder implementation planning. The Builder must still summarize its plan before coding.
+The initial 001-006 roadmap is complete and merged. There is no active Builder sprint. Claude should not begin Sprint 007 until Architect creates detailed sprint artifacts and Ian approves the handoff.
 
 ## When To Stay With Architect
 
@@ -172,7 +172,7 @@ Architect checks:
 - docs reflect reality
 - next sprint can safely begin
 
-## Current Sprint: 006 Nilai & Catatan
+## Current Sprint Status
 
 Current status:
 
@@ -181,42 +181,40 @@ Current status:
 - Sprint 003 Admin Onboarding Minimal is merged and accepted.
 - Sprint 004 Guru Daily Loop is merged and accepted.
 - Sprint 005 Parent Trust Loop is merged and accepted.
-- Sprint 006 Nilai & Catatan is ready for Builder implementation planning.
-- Claude can begin from `planning/sprints/006-nilai-catatan/claude-start-prompt.md`.
+- Sprint 006 Nilai & Catatan is merged and accepted.
+- No active Builder sprint is approved right now.
 
-Claude must implement Sprint 006 only. Claude must not build full raport/finalization, behavior scoring, intervention/case-management workflows, assignments, materials, student login, payment, parent premium, forum, broadcast campaigns, browser/native push delivery, or Sprint 007 work.
+Claude must not build Sprint 007 from conversation context. Sprint 007 must first have detailed `requirements.md`, `blueprint.md`, `acceptance.md`, `handoff-prompt.md`, and `claude-start-prompt.md`.
 
 ## Recommended Ian Workflow Right Now
 
-1. Open Claude in `C:\Users\USER\Documents\SOKA`.
-2. Paste the Sprint 006 Claude start prompt from `planning/sprints/006-nilai-catatan/claude-start-prompt.md`.
-3. Ask Claude to read files and produce the pre-edit implementation plan only.
-4. Review Claude's plan.
-5. If the plan is clear and stays inside Sprint 006, approve implementation.
-6. If the plan changes scope or raises architecture questions, bring it back to Architect before coding.
+1. Stay with Architect for checkpoint and Sprint 007 selection.
+2. Choose the next track: recommended default is Pilot Readiness & App Shell.
+3. Ask Architect to detail Sprint 007 requirements, blueprint, acceptance criteria, handoff prompt, and Claude start prompt.
+4. Move to Claude only after the Sprint 007 handoff exists and Ian approves it.
+5. Ask Claude for a pre-edit implementation plan only.
+6. Bring Claude's plan back to Architect if it changes scope, permissions, data ownership, deployment posture, or role behavior.
 
-## Architect Review Checklist For Claude's Plan
+## Architect Review Checklist For The Next Builder Plan
 
 Claude's plan is acceptable if it:
 
 - Uses React/Vite/TypeScript/Tailwind, Hono, Drizzle, Better Auth, and Neon Postgres.
 - Does not reintroduce Supabase as the baseline backend.
-- Adds only the approved Sprint 006 workflows: basic grades against KKM, draft/published grade visibility, parent published-grade visibility, qualitative student notes, internal/published note visibility, publish notifications, and lightweight audit.
+- Adds only the approved next sprint workflows once Sprint 007 is detailed.
 - Enforces tenant isolation from server-side membership context, not client `school_id`.
-- Derives parent grade/note access only from `parent_student_links` and the caller's memberships.
-- Keeps parent access read-only for grades and notes.
-- Keeps Catatan Siswa qualitative-only.
-- Keeps notifications in-app only.
+- Respects parent access rules from `parent_student_links` and the caller's memberships.
+- Keeps MVP module boundaries from `planning/MODULE-CLASSIFICATION.md`.
 - Includes validation proving School A cannot access School B.
-- Stays out of full raport/finalization, formulas/averages/ranking, behavior scoring, case management, assignments/materials/student login, payments/premium, forum, broadcast campaigns, push delivery, and Sprint 007.
+- Stays out of full raport/finalization, formulas/averages/ranking, behavior scoring, case management, assignments/materials/student login, payments/premium, forum, broadcast campaigns, push delivery, and any future module not explicitly approved for the sprint.
 
-## Completion Gate For Sprint 006
+## Completion Gate For Future Sprints
 
-Sprint 006 should not be considered complete until:
+Future sprints should not be considered complete until:
 
-- Builder has implemented the approved Nilai & Catatan scope.
-- Validation proves teacher grade/note workflows, parent published-only visibility, notification/audit behavior, and cross-school/cross-parent isolation.
+- Builder has implemented only the approved sprint scope.
+- Validation proves the sprint-specific workflow and cross-school isolation.
 - Docs are updated.
 - Architect reviews the output against `acceptance.md`.
 
-Only after that should Architect prepare the next sprint in detail.
+Only after Architect acceptance should Ian merge the PR and pull `main` locally.
