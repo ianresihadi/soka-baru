@@ -58,3 +58,30 @@ server-side, and `requireRole(...)` checks assigned roles. Handlers never read
 
 Better Auth is configured in `packages/auth/src/auth.ts` (email/password only,
 Drizzle adapter, shared Neon database).
+
+## Implemented In Sprint 003 (Admin Onboarding)
+
+Onboarding routes. All `/admin/*` routes require an authenticated session, an
+active membership, and a role; foreign keys in the body/params are verified to
+belong to the caller's tenant before use.
+
+| Route | Required role | Purpose |
+|---|---|---|
+| `POST /admin/schools` | `soka_internal` | Create a school; optionally bind an `adminUserId` as `admin_sekolah`. |
+| `POST /admin/classes` | `admin_sekolah`/`soka_internal` | Create a class. |
+| `GET /admin/classes` | `admin_sekolah`/`soka_internal` | List classes in the tenant. |
+| `POST /admin/students` | `admin_sekolah`/`soka_internal` | Create a student (optional `classId`). |
+| `POST /admin/students/bulk` | `admin_sekolah`/`soka_internal` | Import students from a JSON array. |
+| `GET /admin/students` | `admin_sekolah`/`soka_internal` | List students in the tenant. |
+| `POST /admin/students/:id/assign-class` | `admin_sekolah`/`soka_internal` | Assign a student to a class (same school). |
+| `POST /admin/classes/:id/teachers` | `admin_sekolah`/`soka_internal` | Assign a teacher membership to a class (`wali_kelas`/`guru`). |
+| `POST /admin/parent-link-codes` | `admin_sekolah`/`soka_internal` | Generate a single-use parent link code for a student. |
+| `GET /admin/parent-link-codes` | `admin_sekolah`/`soka_internal` | List link codes in the tenant. |
+| `POST /admin/parent-link-codes/:id/revoke` | `admin_sekolah`/`soka_internal` | Revoke a link code. |
+| `POST /parent-links/redeem` | session only | Parent redeems a code; school/student derived from the code, grants `orang_tua`. |
+| `GET /me/children` | session only | List the parent's linked children. |
+
+Only `soka_internal` may create schools (avoids the chicken-and-egg of needing
+a school admin before the school exists). Teacher *accounts/memberships* are
+created via internal/seed binding; Sprint 003 only assigns existing teacher
+memberships to classes.
