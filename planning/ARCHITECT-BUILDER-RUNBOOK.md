@@ -60,9 +60,9 @@ Move to Claude when all of these are true:
 - The stack and core business rules needed by the sprint are no longer open questions.
 - The Builder can implement without inventing product scope.
 
-For the current project state, Ian can move to Claude now for Sprint 005.
+For the current project state, Ian can move to Claude now for Sprint 006.
 
-Sprint 005 is ready for Builder implementation planning. The Builder must still summarize its plan before coding.
+Sprint 006 is ready for Builder implementation planning. The Builder must still summarize its plan before coding.
 
 ## When To Stay With Architect
 
@@ -172,7 +172,7 @@ Architect checks:
 - docs reflect reality
 - next sprint can safely begin
 
-## Current Sprint: 005 Parent Trust Loop
+## Current Sprint: 006 Nilai & Catatan
 
 Current status:
 
@@ -180,18 +180,19 @@ Current status:
 - Sprint 002 Foundation Data/Auth is merged and accepted.
 - Sprint 003 Admin Onboarding Minimal is merged and accepted.
 - Sprint 004 Guru Daily Loop is merged and accepted.
-- Sprint 005 Parent Trust Loop is ready for Builder implementation planning.
-- Claude can begin from `planning/sprints/005-parent-trust-loop/claude-start-prompt.md`.
+- Sprint 005 Parent Trust Loop is merged and accepted.
+- Sprint 006 Nilai & Catatan is ready for Builder implementation planning.
+- Claude can begin from `planning/sprints/006-nilai-catatan/claude-start-prompt.md`.
 
-Claude must implement Sprint 005 only. Claude must not start Sprint 006 Nilai & Catatan, grades/raport, student notes, payment, parent premium, assignments, materials, forum, native/browser push delivery, or full chat polish.
+Claude must implement Sprint 006 only. Claude must not build full raport/finalization, behavior scoring, intervention/case-management workflows, assignments, materials, student login, payment, parent premium, forum, broadcast campaigns, browser/native push delivery, or Sprint 007 work.
 
 ## Recommended Ian Workflow Right Now
 
 1. Open Claude in `C:\Users\USER\Documents\SOKA`.
-2. Paste the Sprint 005 Claude start prompt from `planning/sprints/005-parent-trust-loop/claude-start-prompt.md`.
+2. Paste the Sprint 006 Claude start prompt from `planning/sprints/006-nilai-catatan/claude-start-prompt.md`.
 3. Ask Claude to read files and produce the pre-edit implementation plan only.
 4. Review Claude's plan.
-5. If the plan is clear and stays inside Sprint 005, approve implementation.
+5. If the plan is clear and stays inside Sprint 006, approve implementation.
 6. If the plan changes scope or raises architecture questions, bring it back to Architect before coding.
 
 ## Architect Review Checklist For Claude's Plan
@@ -200,22 +201,22 @@ Claude's plan is acceptable if it:
 
 - Uses React/Vite/TypeScript/Tailwind, Hono, Drizzle, Better Auth, and Neon Postgres.
 - Does not reintroduce Supabase as the baseline backend.
-- Adds only the approved Sprint 005 parent trust-loop workflows: linked children, Beranda Anak, attendance visibility, notifications, parent message view/send, and parent validation UI.
+- Adds only the approved Sprint 006 workflows: basic grades against KKM, draft/published grade visibility, parent published-grade visibility, qualitative student notes, internal/published note visibility, publish notifications, and lightweight audit.
 - Enforces tenant isolation from server-side membership context, not client `school_id`.
-- Derives parent access only from `parent_student_links` and the caller's memberships.
-- Keeps parent attendance read-only.
-- Treats parent messages as minimal thread/detail/send, not full chat/SLA product.
+- Derives parent grade/note access only from `parent_student_links` and the caller's memberships.
+- Keeps parent access read-only for grades and notes.
+- Keeps Catatan Siswa qualitative-only.
 - Keeps notifications in-app only.
 - Includes validation proving School A cannot access School B.
-- Stays out of grades/notes/payments/premium/tasks/materials/forum/native push and Sprint 006.
+- Stays out of full raport/finalization, formulas/averages/ranking, behavior scoring, case management, assignments/materials/student login, payments/premium, forum, broadcast campaigns, push delivery, and Sprint 007.
 
-## Completion Gate For Sprint 005
+## Completion Gate For Sprint 006
 
-Sprint 005 should not be considered complete until:
+Sprint 006 should not be considered complete until:
 
-- Builder has implemented the approved Parent Trust Loop scope.
-- Validation proves linked-child access, parent home, attendance visibility, notification read state, parent messages, and cross-school/cross-parent isolation.
+- Builder has implemented the approved Nilai & Catatan scope.
+- Validation proves teacher grade/note workflows, parent published-only visibility, notification/audit behavior, and cross-school/cross-parent isolation.
 - Docs are updated.
 - Architect reviews the output against `acceptance.md`.
 
-Only after that should Architect prepare Sprint 006 Nilai & Catatan in detail.
+Only after that should Architect prepare the next sprint in detail.

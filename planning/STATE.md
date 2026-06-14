@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is implemented and validated; it awaits Architect review against `acceptance.md`.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is detailed and ready for Builder pre-edit implementation planning.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Builder Layer: Sprint 005 Parent Trust Loop implemented and validated. Pending Architect acceptance review before Sprint 006 (Nilai & Catatan) is detailed.
+Architect Layer: Sprint 006 Nilai & Catatan handoff is ready. Next step is Builder pre-edit implementation planning in Claude before any code changes.
 
 ## Recently Completed
 
@@ -164,11 +164,23 @@ Builder Layer: Sprint 005 Parent Trust Loop implemented and validated. Pending A
 - Beranda Anak `reassurance` is a simple non-scoring summary (`headline`, `needsAction`, `reasons`); unrecorded attendance is neutral, never treated as alpa.
 - Added mobile-first parent UI (`apps/web` Teacher|Parent tab + `ParentHome.tsx`): child switcher, Beranda summary, notifications + mark-read, attendance history, message thread/detail/send.
 - Validation: 79 tests pass (17 tenant + 25 onboarding + 20 daily-loop + 17 parent-trust); `pnpm typecheck` clean; `apps/web` builds. (Includes Architect PR #4 fix: `needsAction` detects any unread notification, not just the latest.)
+- Architect accepted Sprint 005 after PR #4 merge. Re-review verified the unread-notification fix, 79 API tests, typecheck, and web build.
+
+## Sprint 006 Handoff Notes (Architect)
+
+- Detailed Sprint 006 requirements, blueprint, acceptance criteria, handoff prompt, and Claude start prompt.
+- Sprint 006 scope is basic Nilai & Catatan: grade records against KKM, draft/published grade visibility, parent published-grade visibility, qualitative student notes, internal/published note visibility, publish notifications, and lightweight audit for trust-sensitive changes.
+- Sprint 006 should add `grades` and `student_notes` tables, and may extend `school_settings` with `default_kkm`.
+- Grade records are basic academic records, not full raport. They should support KKM comparison and parent visibility only after publication.
+- Catatan Siswa remains qualitative-only. Internal notes must never be visible to parents; only published/shared notes appear in parent surfaces.
+- Qualitative notes must never mutate `students.objective_status` or create behavior points, ranking, leaderboard, or hidden risk scoring.
+- Sprint 006 explicitly defers full raport finalization, semester locking, print/export, approvals, formulas/averages/ranking, intervention/BK workflows, assignments/materials/student login, payments, premium, forum, broadcast campaigns, push delivery, and Sprint 007 work.
 
 ## Next Actions
 
-- Architect reviews Sprint 005 output against `planning/sprints/005-parent-trust-loop/acceptance.md`.
-- On acceptance, detail Sprint 006 Nilai & Catatan.
+- Send Sprint 006 to Claude using `planning/sprints/006-nilai-catatan/claude-start-prompt.md`.
+- Ask Claude for the pre-edit implementation plan only.
+- Review Claude's plan before approving code changes.
 - Optional follow-up: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` to exercise the full Better Auth HTTP flow end-to-end.
 
 ## Blockers

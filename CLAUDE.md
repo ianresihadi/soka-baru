@@ -31,6 +31,6 @@ Do not use this file as a dumping ground for project history or sprint details.
 
 ## Current Builder Entry Point
 
-For Sprint 005, start from:
+For Sprint 006, start from:
 
-`planning/sprints/005-parent-trust-loop/claude-start-prompt.md`
+`planning/sprints/006-nilai-catatan/claude-start-prompt.md`
