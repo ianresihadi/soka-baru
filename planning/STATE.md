@@ -146,7 +146,7 @@ Builder Layer: Sprint 004 Guru Daily Loop implemented and validated. Pending Arc
 - Notifications: created only for `sakit`/`izin`/`alpa`/`terlambat` (never `hadir`), deduped per student/date/status; in-app rows only (no push).
 - Parent-message scaffold (thread + messages), unreplied = parent message newer than last teacher reply; reply clears it. Not a chat product.
 - Minimal teacher UI in `apps/web` (Papan Pagi panel: 4 sections in order + attendance capture using the class roster returned by Papan Pagi).
-- Validation: 61 tests pass (17 tenant + 25 onboarding + 19 daily-loop); `pnpm typecheck` clean; `apps/web` builds.
+- Validation: 62 tests pass (17 tenant + 25 onboarding + 20 daily-loop); `pnpm typecheck` clean; `apps/web` builds. (Includes Architect PR #3 fix: `schoolTimezone` validated before save.)
 
 ## Next Actions
 

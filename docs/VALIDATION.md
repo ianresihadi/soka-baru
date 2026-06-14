@@ -15,7 +15,7 @@ SOKA Baru should prove correctness through both technical tests and school-workf
 | Area | Validation Method | Status | Notes |
 |---|---|---|---|
 | Product scope | Grill decisions recorded in planning files. | In progress | Session 0 started. |
-| Role access | Permission matrix, backend tenant-isolation tests, and optional RLS tests. | Done (Sprint 002/003/004) | 61 automated tests across `tenant`/`onboarding`/`daily-loop`. RLS deferred. |
+| Role access | Permission matrix, backend tenant-isolation tests, and optional RLS tests. | Done (Sprint 002/003/004) | 62 automated tests across `tenant`/`onboarding`/`daily-loop`. RLS deferred. |
 | Attendance | Unit/integration tests plus manual workflow check. | Done (Sprint 004) | `apps/api/src/__tests__/daily-loop.test.ts`. |
 | Onboarding | Tests for school/class/student/teacher setup and parent links across two schools. | Done (Sprint 003) | `apps/api/src/__tests__/onboarding.test.ts`. |
 | Parent-student links | Link-code generation, redemption, expiry/revoke, and parent-child access. | Done (Sprint 003) | Covered in `onboarding.test.ts`. |
@@ -104,8 +104,10 @@ migrations). What is proven:
 - Cross-school isolation: a School A teacher cannot operate a School B class;
   notifications are limited to the user's memberships.
 - `orang_tua` and unauthenticated callers cannot access `/guru/*`.
+- An invalid `schoolTimezone` on `PATCH /admin/school-settings` is rejected
+  (400) and leaves existing settings usable; a valid zone is accepted.
 
-Total suite: 61 tests across `tenant` (17), `onboarding` (25), `daily-loop` (19).
+Total suite: 62 tests across `tenant` (17), `onboarding` (25), `daily-loop` (20).
 
 Validation commands:
 

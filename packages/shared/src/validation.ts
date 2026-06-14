@@ -111,6 +111,22 @@ export const cutoffTimeSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "format jam harus HH:mm");
 
+/** True when the runtime accepts the IANA timezone (rejects bad Intl input). */
+export function isValidTimeZone(tz: string): boolean {
+  if (!tz) return false;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export const timezoneSchema = z
+  .string()
+  .min(1)
+  .refine(isValidTimeZone, "timezone tidak valid");
+
 export const submitAttendanceSchema = z.object({
   records: z
     .array(
@@ -133,7 +149,7 @@ export type PapanPagiQuery = z.infer<typeof papanPagiQuerySchema>;
 
 export const schoolSettingsUpdateSchema = z.object({
   attendanceCutoffTime: cutoffTimeSchema.optional(),
-  schoolTimezone: z.string().min(1).optional(),
+  schoolTimezone: timezoneSchema.optional(),
 });
 export type SchoolSettingsUpdateInput = z.infer<
   typeof schoolSettingsUpdateSchema

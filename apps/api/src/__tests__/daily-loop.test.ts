@@ -375,3 +375,32 @@ describe("route permission guard", () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe("school settings timezone validation", () => {
+  it("rejects an invalid timezone and keeps existing settings usable", async () => {
+    const app = createApp({ db, resolveUserId: async () => "admin-a" });
+    const patch = (body: unknown) =>
+      app.request("/admin/school-settings", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+    const before = await getOrCreateSchoolSettings(db, ctx.adminA);
+
+    const bad = await patch({ schoolTimezone: "Not/AZone" });
+    expect(bad.status).toBe(400);
+
+    // Bad data was not saved; settings remain unchanged and usable.
+    const after = await getOrCreateSchoolSettings(db, ctx.adminA);
+    expect(after.schoolTimezone).toBe(before.schoolTimezone);
+    const pp = await getPapanPagi(db, ctx.adminA, { classId: id.classA1, date: "2026-06-15" });
+    expect(pp.ok).toBe(true);
+
+    // A valid timezone is accepted.
+    const good = await patch({ schoolTimezone: "Asia/Makassar" });
+    expect(good.status).toBe(200);
+    const updated = await getOrCreateSchoolSettings(db, ctx.adminA);
+    expect(updated.schoolTimezone).toBe("Asia/Makassar");
+  });
+});

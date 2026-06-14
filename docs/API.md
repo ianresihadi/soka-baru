@@ -116,3 +116,7 @@ Mengajar Hari Ini. Attendance completion is `not_started`/`in_progress`/
 `completed_on_time`/`completed_late`, computed against the school-local cutoff.
 Notification records are created only for `sakit`/`izin`/`alpa`/`terlambat`
 (never `hadir`), with no push delivery in Sprint 004.
+
+`PATCH /admin/school-settings` validates `schoolTimezone` against the runtime's
+`Intl` timezone database and returns `400 invalid_input` for an unknown zone, so
+a bad value can never be saved and break Papan Pagi/attendance.

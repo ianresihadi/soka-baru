@@ -53,9 +53,17 @@ instant (`now`) is injectable, and tests prove `completed_on_time` (07:00 WIB)
 vs `completed_late` (08:00 WIB) deterministically. No UTC is hardcoded as a
 business rule. A full timezone-management UI is intentionally deferred.
 
+## Architect review fixes (PR #3)
+
+- `schoolTimezone` is validated against the runtime `Intl` timezone database
+  (`isValidTimeZone` in shared validation). `PATCH /admin/school-settings`
+  returns `400 invalid_input` for an unknown zone, so bad data cannot be saved
+  and break Papan Pagi/attendance. Test added proving rejection + unchanged,
+  still-usable settings, and acceptance of a valid zone.
+
 ## Validation
 
-- `pnpm test` → 61 tests pass (17 `tenant` + 25 `onboarding` + 19 `daily-loop`),
+- `pnpm test` → 62 tests pass (17 `tenant` + 25 `onboarding` + 20 `daily-loop`),
   in-process PGlite + real migrations.
 - `pnpm typecheck` → clean.
 - `pnpm --filter @soka/web build` → builds.
