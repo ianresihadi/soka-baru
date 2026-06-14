@@ -99,7 +99,7 @@ export function PapanPagi() {
   }
 
   return (
-    <section className="mt-8 border-t pt-6">
+    <section id="papan-pagi" className="scroll-mt-20 pt-2">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Papan Pagi</h2>
         {classes.length > 0 && (
@@ -141,7 +141,7 @@ export function PapanPagi() {
           </div>
 
           {/* 2. Pesan Ortu Belum Dibalas */}
-          <div className="rounded border p-3">
+          <div id="pesan-ortu" className="scroll-mt-20 rounded border p-3">
             <h3 className="font-medium">2. Pesan Ortu Belum Dibalas</h3>
             <p className="text-sm text-gray-600">
               {data.unrepliedMessages.count} menunggu balasan
@@ -180,7 +180,7 @@ export function PapanPagi() {
           </div>
 
           {/* Attendance capture */}
-          <div className="rounded border p-3">
+          <div id="absensi" className="scroll-mt-20 rounded border p-3">
             <h3 className="font-medium">Isi Absensi ({today})</h3>
             <table className="mt-2 w-full text-sm">
               <tbody>
@@ -221,7 +221,9 @@ export function PapanPagi() {
             {msg && <span className="ml-2 text-xs text-gray-600">{msg}</span>}
           </div>
 
-          <TeacherGradesNotes classId={classId} roster={data.roster} />
+          <div id="nilai-catatan" className="scroll-mt-20">
+            <TeacherGradesNotes classId={classId} roster={data.roster} />
+          </div>
         </div>
       )}
     </section>

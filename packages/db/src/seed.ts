@@ -1,8 +1,15 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@soka/auth";
 import { bindUserToSchoolByCode } from "./repositories";
 import { getDb, getPool } from "./client";
-import { schools, user } from "./schema";
+import {
+  classes,
+  parentStudentLinks,
+  schools,
+  students,
+  teacherAssignments,
+  user,
+} from "./schema";
 
 // LOCAL DEV ONLY. These are not production credentials.
 const LOCAL_PASSWORD = "LocalDevPassword123!";
@@ -36,10 +43,74 @@ async function ensureUser(email: string, name: string): Promise<string> {
   }
 }
 
-async function main() {
+/** Idempotent: one class per (school, name). */
+async function ensureClass(schoolId: string, name: string) {
   const db = getDb();
+  const existing = await db
+    .select()
+    .from(classes)
+    .where(and(eq(classes.schoolId, schoolId), eq(classes.name, name)));
+  if (existing[0]) return existing[0];
+  const inserted = await db
+    .insert(classes)
+    .values({ schoolId, name, gradeLevel: "1", academicYear: "2026/2027" })
+    .returning();
+  return inserted[0]!;
+}
 
-  await ensureSchool("SOKA-A", "SD Soka Alpha");
+/** Idempotent: one student per (school, fullName); keeps it in the homeroom. */
+async function ensureStudent(schoolId: string, fullName: string, classId: string) {
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(students)
+    .where(and(eq(students.schoolId, schoolId), eq(students.fullName, fullName)));
+  if (existing[0]) {
+    if (existing[0].classId !== classId) {
+      await db
+        .update(students)
+        .set({ classId, updatedAt: new Date() })
+        .where(eq(students.id, existing[0].id));
+    }
+    return existing[0];
+  }
+  const inserted = await db
+    .insert(students)
+    .values({ schoolId, fullName, classId })
+    .returning();
+  return inserted[0]!;
+}
+
+/** Idempotent via uniq_class_member_role. */
+async function ensureTeacherAssignment(
+  schoolId: string,
+  classId: string,
+  membershipId: string,
+  roleInClass: "wali_kelas" | "guru",
+) {
+  const db = getDb();
+  await db
+    .insert(teacherAssignments)
+    .values({ schoolId, classId, membershipId, roleInClass })
+    .onConflictDoNothing();
+}
+
+/** Idempotent via uniq_student_parent. Server-controlled link (not self-claim). */
+async function ensureParentLink(
+  schoolId: string,
+  studentId: string,
+  parentMembershipId: string,
+  relationship: string,
+) {
+  const db = getDb();
+  await db
+    .insert(parentStudentLinks)
+    .values({ schoolId, studentId, parentMembershipId, relationship })
+    .onConflictDoNothing();
+}
+
+async function main() {
+  const schoolA = await ensureSchool("SOKA-A", "SD Soka Alpha");
   await ensureSchool("SOKA-B", "SD Soka Beta");
 
   const userA = await ensureUser("guru.a@example.com", "Guru Alpha");
@@ -47,19 +118,39 @@ async function main() {
   const userMulti = await ensureUser("multi@example.com", "Wali dan Ortu");
 
   // User A: School A, single school, two roles.
-  await bindUserToSchoolByCode(db, userA, "SOKA-A", ["guru", "wali_kelas"]);
+  const bindA = await bindUserToSchoolByCode(getDb(), userA, "SOKA-A", [
+    "guru",
+    "wali_kelas",
+  ]);
   // User B: School B.
-  await bindUserToSchoolByCode(db, userB, "SOKA-B", ["guru"]);
+  await bindUserToSchoolByCode(getDb(), userB, "SOKA-B", ["guru"]);
   // Multi-role user in School A (wali_kelas + orang_tua).
-  await bindUserToSchoolByCode(db, userMulti, "SOKA-A", [
+  const bindMulti = await bindUserToSchoolByCode(getDb(), userMulti, "SOKA-A", [
     "wali_kelas",
     "orang_tua",
   ]);
+
+  // --- Pilot rehearsal happy-path data (School A only) ---------------------
+  // Gives one teacher path (assigned class + roster) and one parent path
+  // (a linked child) so the 001-006 workflows can be smoke-tested end-to-end.
+  if (bindA.ok && bindMulti.ok) {
+    const kelas = await ensureClass(schoolA.id, "Kelas 1A");
+    const anak = await ensureStudent(schoolA.id, "Adinda Putri", kelas.id);
+    await ensureStudent(schoolA.id, "Bagas Pratama", kelas.id);
+    await ensureStudent(schoolA.id, "Citra Lestari", kelas.id);
+
+    // guru.a is the wali kelas of Kelas 1A.
+    await ensureTeacherAssignment(schoolA.id, kelas.id, bindA.membershipId, "wali_kelas");
+
+    // multi@example.com is the parent of Adinda Putri (server-controlled link).
+    await ensureParentLink(schoolA.id, anak.id, bindMulti.membershipId, "orang_tua");
+  }
 
   await getPool().end();
   console.log("Seed complete (LOCAL DEV ONLY credentials).");
   console.log(`  Schools: SOKA-A (SD Soka Alpha), SOKA-B (SD Soka Beta)`);
   console.log(`  Users: guru.a@example.com, guru.b@example.com, multi@example.com`);
+  console.log(`  School A demo: Kelas 1A · 3 siswa · guru.a wali kelas · multi ortu Adinda Putri`);
   console.log(`  Password (local dev only): ${LOCAL_PASSWORD}`);
 }
 

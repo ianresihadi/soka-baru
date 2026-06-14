@@ -132,8 +132,16 @@ export function ParentHome() {
   }
 
   const child = home.selectedChild;
+  const nav = [
+    { href: "#beranda", label: "Beranda" },
+    { href: "#absensi-ortu", label: "Absensi" },
+    { href: "#nilai-ortu", label: "Nilai" },
+    { href: "#catatan-ortu", label: "Catatan" },
+    { href: "#pesan-guru", label: "Pesan" },
+    { href: "#notifikasi", label: "Notifikasi" },
+  ];
   return (
-    <div className="mx-auto mt-6 max-w-md space-y-4">
+    <div className="mx-auto mt-2 max-w-md space-y-4">
       {/* Child switcher */}
       {home.children.length > 1 && (
         <select
@@ -149,8 +157,21 @@ export function ParentHome() {
         </select>
       )}
 
+      {/* Section nav (anchors to real sections only) */}
+      <nav className="flex flex-wrap gap-1.5">
+        {nav.map((n) => (
+          <a
+            key={n.href}
+            href={n.href}
+            className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600"
+          >
+            {n.label}
+          </a>
+        ))}
+      </nav>
+
       {/* Beranda Anak summary */}
-      <div className="rounded-xl border bg-white p-4 shadow-sm">
+      <div id="beranda" className="scroll-mt-20 rounded-xl border bg-white p-4 shadow-sm">
         <p className="text-sm text-gray-500">
           {child.fullName} · {child.className ?? "-"} · {child.schoolName}
         </p>
@@ -163,7 +184,7 @@ export function ParentHome() {
       </div>
 
       {/* Notifications */}
-      <div className="rounded-xl border bg-white p-4">
+      <div id="notifikasi" className="scroll-mt-20 rounded-xl border bg-white p-4">
         <h3 className="text-sm font-semibold">Notifikasi</h3>
         {notifs.length === 0 ? (
           <p className="text-sm text-gray-500">Tidak ada notifikasi.</p>
@@ -190,7 +211,7 @@ export function ParentHome() {
       </div>
 
       {/* Attendance history */}
-      <div className="rounded-xl border bg-white p-4">
+      <div id="absensi-ortu" className="scroll-mt-20 rounded-xl border bg-white p-4">
         <h3 className="text-sm font-semibold">Riwayat Absensi</h3>
         <ul className="mt-2 space-y-1 text-sm">
           {attendance.map((a) => (
@@ -206,7 +227,7 @@ export function ParentHome() {
       </div>
 
       {/* Nilai (published only) */}
-      <div className="rounded-xl border bg-white p-4">
+      <div id="nilai-ortu" className="scroll-mt-20 rounded-xl border bg-white p-4">
         <h3 className="text-sm font-semibold">Nilai</h3>
         <ul className="mt-2 space-y-1 text-sm">
           {grades.map((gr) => (
@@ -222,7 +243,7 @@ export function ParentHome() {
       </div>
 
       {/* Catatan (published only) */}
-      <div className="rounded-xl border bg-white p-4">
+      <div id="catatan-ortu" className="scroll-mt-20 rounded-xl border bg-white p-4">
         <h3 className="text-sm font-semibold">Catatan dari Guru</h3>
         <ul className="mt-2 space-y-1 text-sm">
           {pubNotes.map((nt) => (
@@ -235,7 +256,7 @@ export function ParentHome() {
       </div>
 
       {/* Messages */}
-      <div className="rounded-xl border bg-white p-4">
+      <div id="pesan-guru" className="scroll-mt-20 rounded-xl border bg-white p-4">
         <h3 className="text-sm font-semibold">Pesan Guru</h3>
         <ul className="mt-2 space-y-1 text-sm">
           {threads.map((t) => (

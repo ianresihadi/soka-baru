@@ -171,3 +171,46 @@ real migrations). What is proven:
 
 Total suite: 100 tests across `tenant` (17), `onboarding` (25), `daily-loop`
 (20), `parent-trust` (17), `academic-records` (21).
+
+## Sprint 007 — Pilot Readiness & App Shell
+
+Sprint 007 is a consolidation sprint (role-aware app shell, setup/demo docs,
+deterministic seed extension, one quality gate). It adds no schema or migration
+and changes no permission or parent-visibility rule, so the backend test suite is
+unchanged at **100 tests**.
+
+### Quality gate
+
+The current quality gate is a single command path. Run, in order:
+
+```bash
+pnpm install
+pnpm test                      # 100 API tests (PGlite + real migrations)
+pnpm typecheck                 # tsc --noEmit across all packages
+pnpm --filter @soka/web build  # production web build
+```
+
+A convenience root script wraps the last three (it does NOT run `install`):
+
+```bash
+pnpm validate                  # = pnpm test && pnpm typecheck && pnpm --filter @soka/web build
+```
+
+### Sprint 007 validation results
+
+- `pnpm test`: 100/100 passing (no backend behavior changed).
+- `pnpm typecheck`: clean across all packages (incl. the new `apps/web` shell).
+- `pnpm --filter @soka/web build`: succeeds.
+- `pnpm validate`: succeeds (runs the three above).
+
+### Manual / workflow validation
+
+The app shell, role detection/switching, sign-out, and teacher/parent surfaces
+are validated manually against the seeded demo data. The step-by-step happy path
+is `docs/PILOT_SMOKE_CHECKLIST.md` (teacher sign-in → attendance → parent view →
+grade publish/parent view → note publish/parent view → parent message).
+
+The seed extension reuses already-tested repository functions
+(`bindUserToSchoolByCode`, class/student/teacher-assignment/parent-link inserts)
+with idempotent guards; it has no dedicated automated test and is exercised via
+`pnpm db:seed` against a live database during the smoke checklist.

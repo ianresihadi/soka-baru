@@ -21,8 +21,8 @@ The handoff is a folder, not a conversation.
 pnpm workspaces monorepo:
 
 ```text
-apps/api      # Hono API (auth, membership, tenant-isolation foundation)
-apps/web      # React/Vite/Tailwind validation UI (foundation only)
+apps/api      # Hono API (auth, membership, tenant-isolation, daily loop, parent trust, nilai & catatan)
+apps/web      # React/Vite/Tailwind role-aware app shell (teacher + parent workspaces)
 packages/db   # Drizzle schema, migrations, tenant-aware repositories, seed
 packages/auth # Better Auth (email/password) config
 packages/shared # roles, shared types, zod validation
@@ -30,16 +30,18 @@ packages/shared # roles, shared types, zod validation
 
 ### Local development
 
+Full local setup, env values, seeded demo accounts, and the pilot smoke
+checklist live in **`docs/SETUP.md`** and **`docs/PILOT_SMOKE_CHECKLIST.md`**.
+Quick start:
+
 ```bash
 cp .env.example .env     # set DATABASE_URL, BETTER_AUTH_SECRET, etc.
 pnpm install
-pnpm db:generate         # generate Drizzle migrations (offline)
-pnpm typecheck           # tsc --noEmit across all packages
-pnpm test                # vitest tenant/auth/role tests (in-process PGlite)
+pnpm validate            # test + typecheck + web build (one quality gate)
 
 # With a live Postgres (Neon or local) configured in .env:
 pnpm db:migrate
-pnpm db:seed
+pnpm db:seed             # local-dev demo data (idempotent)
 pnpm dev:api             # http://localhost:8787
 pnpm dev:web             # http://localhost:5173
 ```

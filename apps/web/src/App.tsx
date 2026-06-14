@@ -1,135 +1,92 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { MembershipSummary } from "@soka/shared";
-import { PapanPagi } from "./PapanPagi";
-import { ParentHome } from "./ParentHome";
+import {
+  getMemberships,
+  getSession,
+  signOut,
+  type Session,
+} from "./api";
+import { AppShell } from "./AppShell";
+import { LoginPanel } from "./LoginPanel";
 
 /**
- * Minimal Sprint 002 validation UI. Not a product screen.
- * It exists only to exercise auth, membership resolution, and tenant isolation
- * against the running API.
+ * Root of the SOKA web app. Resolves the session first: unauthenticated users
+ * see the sign-in surface; authenticated users get the role-aware app shell.
+ * This replaces the Sprint 002 raw "Foundation Validation" console.
  */
 export function App() {
-  const [email, setEmail] = useState("guru.a@example.com");
-  const [password, setPassword] = useState("LocalDevPassword123!");
-  const [log, setLog] = useState<string[]>([]);
+  const [phase, setPhase] = useState<"loading" | "signed-out" | "signed-in">(
+    "loading",
+  );
   const [memberships, setMemberships] = useState<MembershipSummary[]>([]);
-  const [view, setView] = useState<"teacher" | "parent">("teacher");
+  const [email, setEmail] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
-  const append = (line: string) => setLog((prev) => [line, ...prev]);
-
-  async function call(path: string, init?: RequestInit) {
-    const res = await fetch(path, { credentials: "include", ...init });
-    const text = await res.text();
-    append(`${init?.method ?? "GET"} ${path} -> ${res.status} ${text}`);
-    return { status: res.status, text };
+  async function loadAuthedState(session: Session) {
+    setMemberships(await getMemberships());
+    setPhase("signed-in");
+    void session;
   }
 
-  async function signIn() {
-    await call("/api/auth/sign-in/email", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+  // Resolve any existing session on first load (e.g. after a refresh).
+  useEffect(() => {
+    void (async () => {
+      const session = await getSession();
+      if (session) await loadAuthedState(session);
+      else setPhase("signed-out");
+    })();
+  }, []);
+
+  async function handleSignedIn(signedInEmail: string) {
+    setEmail(signedInEmail);
+    const session = await getSession();
+    if (session) await loadAuthedState(session);
+    else setPhase("signed-out");
   }
 
-  async function loadMemberships() {
-    const res = await fetch("/me/memberships", { credentials: "include" });
-    if (res.ok) {
-      const data = await res.json();
-      setMemberships(data.memberships ?? []);
+  async function handleSignOut() {
+    setSignOutError(null);
+    setSigningOut(true);
+    let ok = false;
+    try {
+      ok = await signOut();
+    } catch {
+      ok = false;
     }
-    append(`GET /me/memberships -> ${res.status}`);
+    setSigningOut(false);
+    if (ok) {
+      // Server session is cleared — only now drop local authenticated state.
+      setMemberships([]);
+      setEmail(null);
+      setPhase("signed-out");
+      return;
+    }
+    // Sign-out did not clear the server session. Keep the user in the
+    // authenticated shell and surface a clear error — never a client-only
+    // fake sign-out.
+    setSignOutError("Gagal keluar. Sesi masih aktif — coba lagi.");
   }
 
-  async function tenantCheckRead() {
-    await call("/tenant-check/school");
+  if (phase === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <p className="text-sm text-slate-500">Memuat…</p>
+      </div>
+    );
   }
 
-  async function tenantCheckWriteWithForeignId() {
-    // Smuggle a fake foreign school_id; the server must ignore it.
-    await call("/tenant-check/school", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        name: "Renamed by validation UI",
-        schoolId: "00000000-0000-0000-0000-000000000000",
-      }),
-    });
+  if (phase === "signed-out") {
+    return <LoginPanel onSignedIn={handleSignedIn} />;
   }
 
   return (
-    <div className="mx-auto max-w-2xl p-6 font-sans">
-      <h1 className="text-xl font-semibold">SOKA Baru — Foundation Validation</h1>
-      <p className="mt-1 text-sm text-gray-500">
-        Sprint 002 auth / membership / tenant-isolation checks. Local dev only.
-      </p>
-
-      <div className="mt-4 flex flex-col gap-2">
-        <input
-          className="rounded border px-3 py-2"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="email"
-        />
-        <input
-          className="rounded border px-3 py-2"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="password"
-        />
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button className="rounded bg-blue-600 px-3 py-2 text-white" onClick={signIn}>
-          Sign in
-        </button>
-        <button className="rounded bg-gray-700 px-3 py-2 text-white" onClick={loadMemberships}>
-          Load memberships
-        </button>
-        <button className="rounded bg-gray-700 px-3 py-2 text-white" onClick={tenantCheckRead}>
-          Tenant read
-        </button>
-        <button
-          className="rounded bg-amber-600 px-3 py-2 text-white"
-          onClick={tenantCheckWriteWithForeignId}
-        >
-          Tenant write (foreign id)
-        </button>
-      </div>
-
-      {memberships.length > 0 && (
-        <ul className="mt-4 list-disc pl-6 text-sm">
-          {memberships.map((m) => (
-            <li key={m.membershipId}>
-              {m.schoolName} ({m.schoolCode}) — roles: {m.roles.join(", ")}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <pre className="mt-4 max-h-80 overflow-auto rounded bg-gray-900 p-3 text-xs text-green-300">
-        {log.join("\n")}
-      </pre>
-
-      <div className="mt-8 flex gap-2 border-b">
-        <button
-          type="button"
-          className={`px-3 py-2 text-sm ${view === "teacher" ? "border-b-2 border-blue-600 font-medium" : "text-gray-500"}`}
-          onClick={() => setView("teacher")}
-        >
-          Guru (Papan Pagi)
-        </button>
-        <button
-          type="button"
-          className={`px-3 py-2 text-sm ${view === "parent" ? "border-b-2 border-blue-600 font-medium" : "text-gray-500"}`}
-          onClick={() => setView("parent")}
-        >
-          Orang Tua (Beranda Anak)
-        </button>
-      </div>
-
-      {view === "teacher" ? <PapanPagi /> : <ParentHome />}
-    </div>
+    <AppShell
+      email={email}
+      memberships={memberships}
+      onSignOut={handleSignOut}
+      signingOut={signingOut}
+      signOutError={signOutError}
+    />
   );
 }
