@@ -35,8 +35,14 @@ for Architect review. PR not merged.
   returning minimal fields (`membershipId`, `userId`, `name`, `email`, `roles[]`),
   optionally filtered to memberships holding a teacher role. Read-only; no account
   or role creation; not general user management.
-- No schema/migration. No change to parent visibility, teacher class-access, or
-  existing onboarding behavior.
+- Extended school settings to make **default KKM editable** (Architect review):
+  `schoolSettingsUpdateSchema` now accepts `defaultKkm` (0–100 integer, matching
+  per-grade KKM rules); `updateSchoolSettings` persists it. No new route — the
+  existing `PATCH /admin/school-settings` carries the field. Invalid values
+  return `400 invalid_input` and are not persisted.
+- No schema/migration (the `school_settings.default_kkm` column already existed).
+  No change to parent visibility, teacher class-access, or existing onboarding
+  behavior.
 
 ## Seed change (deterministic, idempotent, local-dev only)
 
@@ -51,7 +57,8 @@ for Architect review. PR not merged.
   `POST /admin/students/bulk`, `POST /admin/students/:id/assign-class`,
   `POST /admin/classes/:id/teachers`, `GET|POST /admin/parent-link-codes`,
   `POST /admin/parent-link-codes/:id/revoke`, `GET /guru/settings` (read; its
-  existing guard already admits admin roles), `PATCH /admin/school-settings`.
+  existing guard already admits admin roles), `PATCH /admin/school-settings`
+  (now also carries `defaultKkm`).
 - Added: `GET /admin/memberships`.
 
 ## Tests added / final count
@@ -61,13 +68,17 @@ for Architect review. PR not merged.
   teacher-only (403) and `orang_tua` (403); same-tenant only (School A admin
   cannot see School B's membership); `?role=` teacher filtering excludes
   parent-only; rejects unsupported role filter (400); ignores a client `schoolId`.
-- Final: **107 tests passing** (was 100). Suite: tenant 17, onboarding **32**,
-  daily-loop 20, parent-trust 17, academic-records 21.
+- Added 3 tests for `defaultKkm` on `PATCH /admin/school-settings` in
+  `apps/api/src/__tests__/daily-loop.test.ts`: admin updates it (persisted);
+  out-of-range (150) / non-integer (70.5) rejected (400) and not persisted;
+  non-admin forbidden (403). Existing timezone validation remains green.
+- Final: **110 tests passing** (was 100). Suite: tenant 17, onboarding **32**,
+  daily-loop **23**, parent-trust 17, academic-records 21.
 
 ## Validation command results
 
 - `pnpm install` — ok.
-- `pnpm test` — 107/107 passing.
+- `pnpm test` — 110/110 passing.
 - `pnpm typecheck` — clean across all packages (incl. new admin UI).
 - `pnpm --filter @soka/web build` — succeeds.
 - `pnpm validate` — succeeds (runs the three above; no nested-pnpm PATH issue in
@@ -89,11 +100,8 @@ for Architect review. PR not merged.
 
 ## Explicit deferrals
 
-- `school_settings.default_kkm` editing: shown read-only. The existing
-  `PATCH /admin/school-settings` accepts only `attendanceCutoffTime` and
-  `schoolTimezone`, and Architect guardrail #5 limited the only backend addition
-  to `GET /admin/memberships`, so no KKM write path was added. Per-grade KKM
-  remains editable in the existing Nilai workflow.
+- Default KKM editing is **in scope and implemented** (Architect review reversed
+  the earlier read-only deferral): editable via `PATCH /admin/school-settings`.
 - Not built: full TU/admin product, general user management, account/role
   creation from UI, staff HR/attendance, payments/finance/invoices,
   documents/letters/government reporting, institutional calendar, principal

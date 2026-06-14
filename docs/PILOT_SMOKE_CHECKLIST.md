@@ -41,9 +41,9 @@ D. [ ] **Penugasan Guru** (`#setup-teachers`): assign `guru.a` (shown in the
    non-teacher membership is rejected with a clear message.
 E. [ ] **Kode Tautan Ortu** (`#setup-codes`): generate a link code for a student,
    confirm it appears with status `active`, copy it, then revoke it.
-F. [ ] **Pengaturan Sekolah** (`#setup-settings`): change the attendance cutoff or
-   timezone and save; confirm success. An invalid timezone shows a clear error
-   and is not saved. (`default_kkm` is shown read-only.)
+F. [ ] **Pengaturan Sekolah** (`#setup-settings`): change the attendance cutoff,
+   timezone, and **Default KKM** and save; confirm success. An invalid timezone
+   or an out-of-range KKM (e.g. 150) shows a clear error and is not saved.
 G. [ ] Confirm a non-admin (e.g. `guru.a@example.com`) does **not** see the Admin /
    Setup option.
 

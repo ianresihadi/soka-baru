@@ -200,6 +200,8 @@ The workspace reuses existing routes for the rest of setup: `GET|POST
 `POST /admin/students/:id/assign-class`, `POST /admin/classes/:id/teachers`,
 `GET|POST /admin/parent-link-codes`, `POST /admin/parent-link-codes/:id/revoke`,
 `GET /guru/settings` (read; its existing guard already admits admin roles), and
-`PATCH /admin/school-settings` (cutoff + timezone only). `school_settings.default_kkm`
-is shown read-only in the UI; the existing PATCH does not accept it and no new
-write route was added in this sprint.
+`PATCH /admin/school-settings` (attendance cutoff, school timezone, and default
+KKM). `schoolSettingsUpdateSchema` accepts `defaultKkm` as a 0–100 integer
+(matching per-grade KKM rules); an out-of-range or non-integer value returns
+`400 invalid_input` and is not persisted. No new settings route was added — the
+existing PATCH carries the new field.

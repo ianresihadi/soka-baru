@@ -404,3 +404,40 @@ describe("school settings timezone validation", () => {
     expect(updated.schoolTimezone).toBe("Asia/Makassar");
   });
 });
+
+describe("school settings defaultKkm (PATCH /admin/school-settings)", () => {
+  const patchAs = (userId: string, body: unknown) =>
+    createApp({ db, resolveUserId: async () => userId }).request(
+      "/admin/school-settings",
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      },
+    );
+
+  it("lets an admin update defaultKkm", async () => {
+    const res = await patchAs("admin-a", { defaultKkm: 70 });
+    expect(res.status).toBe(200);
+    const settings = await getOrCreateSchoolSettings(db, ctx.adminA);
+    expect(settings.defaultKkm).toBe(70);
+  });
+
+  it("rejects an invalid defaultKkm and does not persist it", async () => {
+    const before = await getOrCreateSchoolSettings(db, ctx.adminA);
+    const tooHigh = await patchAs("admin-a", { defaultKkm: 150 });
+    expect(tooHigh.status).toBe(400);
+    const notInt = await patchAs("admin-a", { defaultKkm: 70.5 });
+    expect(notInt.status).toBe(400);
+    const after = await getOrCreateSchoolSettings(db, ctx.adminA);
+    expect(after.defaultKkm).toBe(before.defaultKkm);
+  });
+
+  it("forbids a non-admin from updating settings", async () => {
+    // teacher-a2 is a guru in School A with no admin role.
+    const res = await patchAs("teacher-a2", { defaultKkm: 60 });
+    expect(res.status).toBe(403);
+    const settings = await getOrCreateSchoolSettings(db, ctx.adminA);
+    expect(settings.defaultKkm).not.toBe(60);
+  });
+});

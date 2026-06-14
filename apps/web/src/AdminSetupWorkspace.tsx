@@ -540,30 +540,62 @@ function SettingsForm({
   onSave,
 }: {
   settings: SchoolSettings;
-  onSave: (i: { attendanceCutoffTime?: string; schoolTimezone?: string }) => Promise<boolean>;
+  onSave: (i: {
+    attendanceCutoffTime?: string;
+    schoolTimezone?: string;
+    defaultKkm?: number;
+  }) => Promise<boolean>;
 }) {
   const [cutoff, setCutoff] = useState(settings.attendanceCutoffTime);
   const [tz, setTz] = useState(settings.schoolTimezone);
+  const [kkm, setKkm] = useState(String(settings.defaultKkm));
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  function save() {
+    setLocalError(null);
+    const kkmNum = Number(kkm);
+    if (!Number.isInteger(kkmNum) || kkmNum < 0 || kkmNum > 100) {
+      setLocalError("KKM default harus bilangan bulat 0–100.");
+      return;
+    }
+    void onSave({
+      attendanceCutoffTime: cutoff.trim(),
+      schoolTimezone: tz.trim(),
+      defaultKkm: kkmNum,
+    });
+  }
+
   return (
-    <div className="flex flex-wrap items-end gap-2">
-      <label className="text-sm text-slate-700">
-        Cutoff absensi
-        <input className={`${input} ml-2`} placeholder="HH:mm" value={cutoff} onChange={(e) => setCutoff(e.target.value)} />
-      </label>
-      <label className="text-sm text-slate-700">
-        Zona waktu
-        <input className={`${input} ml-2`} placeholder="Asia/Jakarta" value={tz} onChange={(e) => setTz(e.target.value)} />
-      </label>
-      <span className="text-xs text-slate-500">
-        KKM default: <strong>{settings.defaultKkm}</strong> (atur per nilai; ubah massal belum didukung)
-      </span>
-      <button
-        type="button"
-        className={btn}
-        onClick={() => void onSave({ attendanceCutoffTime: cutoff.trim(), schoolTimezone: tz.trim() })}
-      >
-        Simpan
-      </button>
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="text-sm text-slate-700">
+          Cutoff absensi
+          <input className={`${input} ml-2`} placeholder="HH:mm" value={cutoff} onChange={(e) => setCutoff(e.target.value)} />
+        </label>
+        <label className="text-sm text-slate-700">
+          Zona waktu
+          <input className={`${input} ml-2`} placeholder="Asia/Jakarta" value={tz} onChange={(e) => setTz(e.target.value)} />
+        </label>
+        <label className="text-sm text-slate-700">
+          KKM default
+          <input
+            className={`${input} ml-2 w-20`}
+            type="number"
+            min={0}
+            max={100}
+            placeholder="0–100"
+            value={kkm}
+            onChange={(e) => setKkm(e.target.value)}
+          />
+        </label>
+        <button type="button" className={btn} onClick={save}>
+          Simpan
+        </button>
+      </div>
+      {localError && <p className="text-xs text-red-700">{localError}</p>}
+      <p className="text-xs text-slate-500">
+        KKM default dipakai saat sebuah nilai tidak menyetel KKM-nya sendiri.
+      </p>
     </div>
   );
 }

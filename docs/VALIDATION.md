@@ -236,10 +236,19 @@ covering `GET /admin/memberships`:
 - ignores a client-supplied `schoolId` query param (scope stays the caller's
   tenant).
 
+Added to `apps/api/src/__tests__/daily-loop.test.ts`, covering `defaultKkm` on
+`PATCH /admin/school-settings`:
+
+- an admin can update `defaultKkm` (persisted);
+- an out-of-range (150) or non-integer (70.5) `defaultKkm` is rejected (400) and
+  not persisted;
+- a non-admin (teacher-only) caller is forbidden (403) and cannot change settings.
+
 ### Results
 
-- `pnpm test`: **107/107 passing** (was 100; +7 admin-membership tests). Suite:
-  tenant 17, onboarding **32**, daily-loop 20, parent-trust 17, academic-records 21.
+- `pnpm test`: **110/110 passing** (was 100; +7 admin-membership, +3 defaultKkm
+  settings). Suite: tenant 17, onboarding **32**, daily-loop **23**, parent-trust
+  17, academic-records 21.
 - `pnpm typecheck`: clean across all packages (incl. the new admin UI).
 - `pnpm --filter @soka/web build`: succeeds.
 - `pnpm validate`: succeeds (runs the three above).

@@ -168,8 +168,8 @@ Implemented:
   user-management surface. Tests prove auth, admin-role guard, same-tenant
   isolation, role filtering, and that a client `schoolId` is ignored.
 - Parent linking remains school-issued-code only (no free claim by name/NISN).
-  Settings edits remain limited to the existing `attendanceCutoffTime` and
-  `schoolTimezone`; `default_kkm` is read-only in the UI.
+  Settings edits cover `attendanceCutoffTime`, `schoolTimezone`, and `defaultKkm`
+  (0–100 integer) through the existing `PATCH /admin/school-settings`.
 - No parent-visibility, teacher class-access, or onboarding behavior changed.
 
 ### Postgres RLS — Deferred (with reason)

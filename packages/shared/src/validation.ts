@@ -150,6 +150,8 @@ export type PapanPagiQuery = z.infer<typeof papanPagiQuerySchema>;
 export const schoolSettingsUpdateSchema = z.object({
   attendanceCutoffTime: cutoffTimeSchema.optional(),
   schoolTimezone: timezoneSchema.optional(),
+  // Default KKM is a 0-100 percentage threshold, matching per-grade KKM rules.
+  defaultKkm: z.number().int().min(0).max(100).optional(),
 });
 export type SchoolSettingsUpdateInput = z.infer<
   typeof schoolSettingsUpdateSchema

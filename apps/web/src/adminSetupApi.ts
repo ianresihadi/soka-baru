@@ -159,13 +159,13 @@ export function getSettings() {
   return request("/guru/settings", undefined, (j) => (j as { settings: SchoolSettings }).settings);
 }
 /**
- * Update only the fields the existing PATCH supports (cutoff + timezone).
- * `defaultKkm` is read-only here: the current API does not accept it, and no
- * new write endpoint is in Sprint 008 scope.
+ * Update school settings via the existing PATCH (cutoff, timezone, default KKM).
+ * Never sends `school_id`; tenant scope is server-derived.
  */
 export function updateSettings(input: {
   attendanceCutoffTime?: string;
   schoolTimezone?: string;
+  defaultKkm?: number;
 }) {
   return request(
     "/admin/school-settings",

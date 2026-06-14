@@ -104,8 +104,7 @@ workflows can be smoke-tested end to end. See `docs/PILOT_SMOKE_CHECKLIST.md`.
   build.
 - The Admin / Setup workspace (Sprint 008) lets an `admin_sekolah`/`soka_internal`
   user manage classes, students, teacher assignments, parent link codes, and
-  attendance cutoff/timezone. It does **not** create user accounts or roles —
-  teacher/admin accounts and memberships are still provisioned via the seed
-  (server-controlled internal binding), not a client self-claim path.
-- `school_settings.default_kkm` is shown read-only in the Admin UI; the current
-  settings API only edits cutoff and timezone.
+  school settings (attendance cutoff, timezone, and default KKM). It does **not**
+  create user accounts or roles — teacher/admin accounts and memberships are still
+  provisioned via the seed (server-controlled internal binding), not a client
+  self-claim path.
