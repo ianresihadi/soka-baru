@@ -31,6 +31,6 @@ Do not use this file as a dumping ground for project history or sprint details.
 
 ## Current Builder Entry Point
 
-For Sprint 003, start from:
+For Sprint 004, start from:
 
-`planning/sprints/003-admin-onboarding-minimal/claude-start-prompt.md`
+`planning/sprints/004-guru-daily-loop/claude-start-prompt.md`

@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is implemented and validated; it awaits Architect review against `acceptance.md`.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is detailed and ready for Builder pre-edit implementation planning.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Builder Layer: Sprint 003 Admin Onboarding Minimal implemented and validated. Pending Architect acceptance review before Sprint 004 (Guru Daily Loop) is detailed.
+Architect Layer: Sprint 004 Guru Daily Loop handoff is ready. Builder should start from `planning/sprints/004-guru-daily-loop/claude-start-prompt.md` and produce the required pre-edit plan before implementation.
 
 ## Recently Completed
 
@@ -126,11 +126,22 @@ Builder Layer: Sprint 003 Admin Onboarding Minimal implemented and validated. Pe
 - Lightweight audit via `audit_events` for parent-link-code and parent-link create events.
 - Validation: 42 tests pass (17 tenant + 25 onboarding); `pnpm typecheck` clean; `apps/web` builds.
 - Architect review fixes applied: branch rebased on latest main preserving Architect Sprint 003 handoff docs; atomic single-use redemption; transactional safe school creation.
+- Architect accepted Sprint 003 after PR #2 merge. Re-review verified branch ancestry, preserved handoff docs, transactional school creation, atomic parent-code redemption, 42 API tests, typecheck, and web build.
+
+## Sprint 004 Handoff Notes (Architect)
+
+- Detailed Sprint 004 requirements, blueprint, acceptance criteria, handoff prompt, and Claude start prompt.
+- Sprint 004 scope is backend-first plus minimal teacher validation UI: `school_settings`, `attendance_records`, minimal parent-message scaffold, `notifications`, Papan Pagi API, attendance submit/upsert API, teacher access checks, and focused tests.
+- Papan Pagi order remains fixed: Status Absensi Hari Ini, Pesan Ortu Belum Dibalas, Siswa Perlu Perhatian, Jadwal Mengajar Hari Ini.
+- Attendance statuses remain exactly: `hadir`, `sakit`, `izin`, `alpa`, `terlambat`.
+- Notification records are required for `sakit`, `izin`, `alpa`, and `terlambat`; `hadir` must not create required daily notification records.
+- Sprint 004 explicitly defers full parent PWA polish, full chat, broadcast announcements, formal message SLA, grades/raport, student notes, principal analytics, payments, LMS, and push delivery.
 
 ## Next Actions
 
-- Architect reviews Sprint 003 output against `planning/sprints/003-admin-onboarding-minimal/acceptance.md`.
-- On acceptance, detail Sprint 004 Guru Daily Loop (attendance + Papan Pagi + parent messaging scope).
+- Ian may move to Claude for Sprint 004 Builder planning using `planning/sprints/004-guru-daily-loop/claude-start-prompt.md`.
+- Builder must produce the Sprint 004 pre-edit implementation plan before coding.
+- If Builder changes product scope, permissions, tenant isolation, correction rules, notification rules, or message rules, return to Architect before implementation.
 - Optional follow-up: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` to exercise the full Better Auth HTTP flow end-to-end.
 
 ## Blockers

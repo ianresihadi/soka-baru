@@ -60,9 +60,9 @@ Move to Claude when all of these are true:
 - The stack and core business rules needed by the sprint are no longer open questions.
 - The Builder can implement without inventing product scope.
 
-For the current project state, Ian can move to Claude now for Sprint 002.
+For the current project state, Ian can move to Claude now for Sprint 004.
 
-Sprint 002 is ready for Builder implementation planning. The Builder must still summarize its plan before coding.
+Sprint 004 is ready for Builder implementation planning. The Builder must still summarize its plan before coding.
 
 ## When To Stay With Architect
 
@@ -172,23 +172,25 @@ Architect checks:
 - docs reflect reality
 - next sprint can safely begin
 
-## Current Sprint: 002 Foundation Data/Auth
+## Current Sprint: 004 Guru Daily Loop
 
 Current status:
 
 - Sprint 001 Discovery & Architecture is complete.
-- Sprint 002 is ready for Builder implementation planning.
-- Claude can begin from `planning/sprints/002-foundation-data-auth/handoff-prompt.md`.
+- Sprint 002 Foundation Data/Auth is merged and accepted.
+- Sprint 003 Admin Onboarding Minimal is merged and accepted.
+- Sprint 004 Guru Daily Loop is ready for Builder implementation planning.
+- Claude can begin from `planning/sprints/004-guru-daily-loop/claude-start-prompt.md`.
 
-Claude must not start Guru UI, Parent PWA, attendance, messaging, payment, or principal dashboard work in Sprint 002.
+Claude must implement Sprint 004 only. Claude must not start Sprint 005 Parent Trust Loop, full chat, grades/raport, student notes, payment, LMS, principal analytics, or push-delivery work.
 
 ## Recommended Ian Workflow Right Now
 
 1. Open Claude in `C:\Users\USER\Documents\SOKA`.
-2. Paste the Sprint 002 Claude start prompt from `planning/sprints/002-foundation-data-auth/claude-start-prompt.md`.
+2. Paste the Sprint 004 Claude start prompt from `planning/sprints/004-guru-daily-loop/claude-start-prompt.md`.
 3. Ask Claude to read files and produce the pre-edit implementation plan only.
 4. Review Claude's plan.
-5. If the plan is clear and stays inside Sprint 002, approve implementation.
+5. If the plan is clear and stays inside Sprint 004, approve implementation.
 6. If the plan changes scope or raises architecture questions, bring it back to Architect before coding.
 
 ## Architect Review Checklist For Claude's Plan
@@ -197,21 +199,23 @@ Claude's plan is acceptable if it:
 
 - Uses React/Vite/TypeScript/Tailwind, Hono, Drizzle, Better Auth, and Neon Postgres.
 - Does not reintroduce Supabase as the baseline backend.
-- Includes `schools`, `school_memberships`, and `membership_roles`.
-- Explains how Better Auth user/session tables fit the SOKA tables.
+- Adds only the approved Sprint 004 tables/workflows: school settings, attendance, minimal messages, notifications, Papan Pagi, and teacher validation UI.
 - Enforces tenant isolation from server-side membership context, not client `school_id`.
-- Includes seed data for at least two schools.
+- Enforces teacher class access through `teacher_assignments`.
+- Keeps attendance statuses limited to `hadir`, `sakit`, `izin`, `alpa`, and `terlambat`.
+- Creates notification records only for `sakit`, `izin`, `alpa`, and `terlambat`, not `hadir`.
+- Includes post-day attendance correction reason and audit behavior.
+- Treats parent messaging as a minimal unreplied-message scaffold, not a full chat/SLA product.
 - Includes validation proving School A cannot access School B.
-- Either implements Postgres RLS or explicitly defers it with a reason.
-- Stays out of product workflows.
+- Stays out of Sprint 005/006 and later modules.
 
-## Completion Gate For Sprint 002
+## Completion Gate For Sprint 004
 
-Sprint 002 should not be considered complete until:
+Sprint 004 should not be considered complete until:
 
-- Builder has implemented or scaffolded the foundation.
-- Validation proves cross-school isolation.
+- Builder has implemented the approved Guru Daily Loop scope.
+- Validation proves attendance rules, message scaffold, notifications, teacher class access, and cross-school isolation.
 - Docs are updated.
 - Architect reviews the output against `acceptance.md`.
 
-Only after that should Architect prepare Sprint 003 Admin Onboarding Minimal in detail.
+Only after that should Architect prepare Sprint 005 Parent Trust Loop in detail.
