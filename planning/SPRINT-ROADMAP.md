@@ -13,6 +13,7 @@ Session 9 turns product decisions into buildable sprint order.
 | 005 | Parent Trust Loop | Build parent PWA: child home, attendance visibility, notifications, and messages. |
 | 006 | Nilai & Catatan | Build basic grades/KKM, qualitative student notes with publication status, and parent visibility. |
 | 007 | Pilot Readiness & App Shell | Consolidate the existing MVP slices into a coherent role-aware app shell, setup path, validation gate, and pilot smoke checklist. |
+| 008 | Admin Setup UI Hardening | Make existing onboarding APIs usable through a constrained setup surface for first-pilot operations. |
 
 ## Roadmap Principle
 
@@ -30,7 +31,8 @@ Do not start implementation from Phase 2 modules, full TU/admin, payments, princ
 | 004 | Merged and accepted via PR #3. |
 | 005 | Merged and accepted via PR #4. |
 | 006 | Merged and accepted via PR #5. |
-| 007 | Requirements, blueprint, acceptance criteria, handoff prompt, Claude start prompt, and placeholder completion notes detailed; ready for Builder pre-edit implementation planning. |
+| 007 | Merged and accepted via PR #6. |
+| 008 | Recommended next; not yet detailed. |
 
 ## Initial Roadmap Completion
 
@@ -57,6 +59,6 @@ What is still not proven:
 | Candidate Sprint | Recommendation | Why |
 |---|---|---|
 | 007 Pilot Readiness & App Shell | Selected | The core slices exist, but the app still needs to become usable, demoable, and deployable before adding more modules. |
-| 008 Admin Setup UI Hardening | Candidate | Real schools need easier setup for students, classes, teachers, and parent links. Best after the shell/setup path is stable. |
+| 008 Admin Setup UI Hardening | Recommended next | Real schools need easier setup for students, classes, teachers, and parent links. Best after the shell/setup path is stable. |
 | 008 Pengumuman | Later | Useful parent trust feature, but less urgent than making the existing trust loop production-ready. |
 | 008 Raport / Semester Finalization | Defer | Valuable, but would pull SOKA into heavier academic workflow before the MVP is pilot-hardened. |

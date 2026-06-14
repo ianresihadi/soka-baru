@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is implemented by Builder and ready for Architect review (PR not merged).
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Builder Layer: Sprint 007 Pilot Readiness & App Shell is implemented on branch `claude/zealous-gauss-48du5s` and awaiting Architect review. The pre-edit plan was approved by Ian with Architect guardrails (idempotent local-dev seed, real Better-Auth sign-out only, no dead nav, no schema/migration, parent visibility unchanged). No PR has been merged.
+Architect checkpoint after Sprint 007. No active Builder sprint is approved right now. Claude should not begin Sprint 008 until Architect creates detailed sprint artifacts and Ian approves the handoff.
 
 ## Recently Completed
 
@@ -212,11 +212,18 @@ Builder Layer: Sprint 007 Pilot Readiness & App Shell is implemented on branch `
 - Added `docs/SETUP.md` and `docs/PILOT_SMOKE_CHECKLIST.md`; updated `docs/VALIDATION.md`, `README.md`. `docs/API.md`/`PERMISSIONS.md`/`UX_VISUAL_STANDARD.md` and `planning/DECISIONS.md` unchanged (no behavior/decision change).
 - Validation: `pnpm install` ok; `pnpm validate` ok → 100/100 API tests passing (unchanged), typecheck clean across all packages incl. the new shell, web build succeeds. Live Neon migrate/seed + full Better Auth HTTP flow not exercised here (no `DATABASE_URL`); documented for manual verification.
 
+## Architect Checkpoint After Sprint 007
+
+- Architect accepted Sprint 007 after PR #6 merge. Re-review verified the sign-out fix (no client-only fake sign-out), 100 API tests, typecheck, and web build. In the Codex environment, `pnpm validate` could not run because nested `pnpm` was not on PATH, but its three constituent commands passed via `corepack pnpm@10.33.0`.
+- SOKA now has a coherent role-aware web shell, local setup docs, pilot smoke checklist, deterministic local-dev seed data, and a one-command quality gate.
+- The biggest remaining pilot gap is practical school setup by a non-technical operator. Today, realistic onboarding still depends on seed/internal paths or API calls for school/class/student/teacher/parent-link setup.
+- Recommended next direction: Sprint 008 should be **Admin Setup UI Hardening**, focused on making the already-built onboarding APIs usable through a constrained internal/admin setup surface.
+
 ## Next Actions
 
-- Architect review of the Sprint 007 branch against the acceptance gate (coherent app shell, intact parent-visibility boundaries, passing validation, actionable setup/smoke docs, no new module scope).
-- Optional live verification: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` and walk `docs/PILOT_SMOKE_CHECKLIST.md` end-to-end (incl. the Better Auth HTTP sign-in/sign-out flow).
-- Do not start Sprint 008 until Sprint 007 is accepted.
+- Architect should detail Sprint 008 requirements, blueprint, acceptance criteria, handoff prompt, and Claude start prompt before Builder starts.
+- Recommended Sprint 008 track: Admin Setup UI Hardening, limited to the setup workflows already supported by Sprint 003 APIs.
+- Optional live verification remains useful: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` and walk `docs/PILOT_SMOKE_CHECKLIST.md` end-to-end.
 
 ## Blockers
 
