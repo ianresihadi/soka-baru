@@ -1,5 +1,6 @@
 import {
   boolean,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -119,3 +120,123 @@ export const membershipRoles = pgTable(
     ),
   }),
 );
+
+// ---------------------------------------------------------------------------
+// Sprint 003 — Admin onboarding tables (all school-owned / tenant-scoped)
+// ---------------------------------------------------------------------------
+
+/** Homeroom/class grouping. */
+export const classes = pgTable("classes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  gradeLevel: text("grade_level"),
+  academicYear: text("academic_year"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/** Student/child record. A student belongs to at most one homeroom (class_id). */
+export const students = pgTable("students", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  fullName: text("full_name").notNull(),
+  nisn: text("nisn"),
+  classId: uuid("class_id").references(() => classes.id, {
+    onDelete: "set null",
+  }),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/** Connects a teacher membership to a class as wali_kelas or guru. */
+export const teacherAssignments = pgTable(
+  "teacher_assignments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    membershipId: uuid("membership_id")
+      .notNull()
+      .references(() => schoolMemberships.id, { onDelete: "cascade" }),
+    roleInClass: text("role_in_class").notNull(), // wali_kelas | guru
+    subject: text("subject"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    uniqClassMemberRole: uniqueIndex("uniq_class_member_role").on(
+      t.classId,
+      t.membershipId,
+      t.roleInClass,
+    ),
+  }),
+);
+
+/** School-issued, single-use code that links a parent to one student. */
+export const parentLinkCodes = pgTable("parent_link_codes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  studentId: uuid("student_id")
+    .notNull()
+    .references(() => students.id, { onDelete: "cascade" }),
+  code: text("code").notNull().unique(),
+  status: text("status").notNull().default("active"), // active | used | revoked
+  expiresAt: timestamp("expires_at").notNull(),
+  createdByUserId: text("created_by_user_id")
+    .notNull()
+    .references(() => user.id),
+  redeemedByUserId: text("redeemed_by_user_id").references(() => user.id),
+  redeemedAt: timestamp("redeemed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** Connects a parent membership to a student. */
+export const parentStudentLinks = pgTable(
+  "parent_student_links",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    parentMembershipId: uuid("parent_membership_id")
+      .notNull()
+      .references(() => schoolMemberships.id, { onDelete: "cascade" }),
+    relationship: text("relationship"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    uniqStudentParent: uniqueIndex("uniq_student_parent").on(
+      t.studentId,
+      t.parentMembershipId,
+    ),
+  }),
+);
+
+/** Lightweight audit trail for trust-sensitive events (parent-link create/remove). */
+export const auditEvents = pgTable("audit_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  actorUserId: text("actor_user_id").references(() => user.id),
+  action: text("action").notNull(),
+  entityType: text("entity_type").notNull(),
+  entityId: text("entity_id"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

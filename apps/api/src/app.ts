@@ -1,15 +1,37 @@
 import { Hono, type Context, type Next } from "hono";
 import { cors } from "hono/cors";
 import {
+  assignStudentToClass,
+  assignTeacherToClass,
   bindUserToSchoolByCode,
+  createClass,
+  createParentLinkCode,
+  createSchool,
+  createStudent,
+  createStudents,
   getActiveTenantContext,
   getSchoolForTenant,
+  listChildrenForParent,
+  listClasses,
   listMembershipsForTenant,
+  listParentLinkCodes,
+  listStudents,
   listUserMemberships,
+  redeemParentLinkCode,
+  revokeParentLinkCode,
   updateSchoolNameForTenant,
+  TenantViolationError,
   type Database,
 } from "@soka/db";
 import {
+  assignClassSchema,
+  assignTeacherSchema,
+  bulkStudentsSchema,
+  createClassSchema,
+  createLinkCodeSchema,
+  createSchoolSchema,
+  createStudentSchema,
+  redeemLinkCodeSchema,
   schoolBindingSchema,
   tenantCheckUpdateSchema,
   isSelfBindableRole,
@@ -142,6 +164,192 @@ export function createApp(deps: AppDeps) {
       return c.json({ updated });
     },
   );
+
+  // --- Sprint 003: Admin onboarding ----------------------------------------
+
+  const requireAdmin = requireRole("admin_sekolah", "soka_internal");
+
+  const readJson = async (c: Ctx) => c.req.json().catch(() => null);
+
+  // Platform-level: only soka_internal may create schools.
+  app.post(
+    "/admin/schools",
+    requireAuth,
+    requireMembership,
+    requireRole("soka_internal"),
+    async (c) => {
+      const parsed = createSchoolSchema.safeParse(await readJson(c));
+      if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      // School creation + admin binding happen in one transaction; an invalid
+      // adminUserId aborts before any school row is created.
+      const result = await createSchool(deps.db, {
+        name: parsed.data.name,
+        schoolCode: parsed.data.schoolCode,
+        adminUserId: parsed.data.adminUserId,
+      });
+      if (!result.ok) {
+        const status = result.reason === "admin_user_not_found" ? 404 : 409;
+        return c.json({ error: result.reason }, status);
+      }
+      return c.json(result, 201);
+    },
+  );
+
+  app.post("/admin/classes", requireAuth, requireMembership, requireAdmin, async (c) => {
+    const parsed = createClassSchema.safeParse(await readJson(c));
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    const created = await createClass(deps.db, c.get("tenant"), parsed.data);
+    return c.json({ class: created }, 201);
+  });
+
+  app.get("/admin/classes", requireAuth, requireMembership, requireAdmin, async (c) => {
+    return c.json({ classes: await listClasses(deps.db, c.get("tenant")) });
+  });
+
+  app.post("/admin/students", requireAuth, requireMembership, requireAdmin, async (c) => {
+    const parsed = createStudentSchema.safeParse(await readJson(c));
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    try {
+      const created = await createStudent(deps.db, c.get("tenant"), parsed.data);
+      return c.json({ student: created }, 201);
+    } catch (err) {
+      if (err instanceof TenantViolationError)
+        return c.json({ error: "class_not_found" }, 404);
+      throw err;
+    }
+  });
+
+  app.post("/admin/students/bulk", requireAuth, requireMembership, requireAdmin, async (c) => {
+    const parsed = bulkStudentsSchema.safeParse(await readJson(c));
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    try {
+      const created = await createStudents(deps.db, c.get("tenant"), parsed.data.students);
+      return c.json({ students: created, count: created.length }, 201);
+    } catch (err) {
+      if (err instanceof TenantViolationError)
+        return c.json({ error: "class_not_found" }, 404);
+      throw err;
+    }
+  });
+
+  app.get("/admin/students", requireAuth, requireMembership, requireAdmin, async (c) => {
+    return c.json({ students: await listStudents(deps.db, c.get("tenant")) });
+  });
+
+  app.post(
+    "/admin/students/:id/assign-class",
+    requireAuth,
+    requireMembership,
+    requireAdmin,
+    async (c) => {
+      const studentId = c.req.param("id");
+      if (!studentId) return c.json({ error: "invalid_input" }, 400);
+      const parsed = assignClassSchema.safeParse(await readJson(c));
+      if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      const result = await assignStudentToClass(
+        deps.db,
+        c.get("tenant"),
+        studentId,
+        parsed.data.classId,
+      );
+      if (!result.ok) return c.json({ error: result.reason }, 404);
+      return c.json({ ok: true });
+    },
+  );
+
+  app.post(
+    "/admin/classes/:id/teachers",
+    requireAuth,
+    requireMembership,
+    requireAdmin,
+    async (c) => {
+      const classId = c.req.param("id");
+      if (!classId) return c.json({ error: "invalid_input" }, 400);
+      const parsed = assignTeacherSchema.safeParse(await readJson(c));
+      if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      const result = await assignTeacherToClass(
+        deps.db,
+        c.get("tenant"),
+        classId,
+        parsed.data.membershipId,
+        parsed.data.roleInClass,
+        parsed.data.subject,
+      );
+      if (!result.ok) {
+        const status = result.reason === "membership_not_teacher" ? 422 : 404;
+        return c.json({ error: result.reason }, status);
+      }
+      return c.json({ ok: true }, 201);
+    },
+  );
+
+  app.post(
+    "/admin/parent-link-codes",
+    requireAuth,
+    requireMembership,
+    requireAdmin,
+    async (c) => {
+      const parsed = createLinkCodeSchema.safeParse(await readJson(c));
+      if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      const result = await createParentLinkCode(
+        deps.db,
+        c.get("tenant"),
+        parsed.data.studentId,
+        parsed.data.expiresInDays,
+      );
+      if (!result.ok) return c.json({ error: result.reason }, 404);
+      return c.json({ code: result.code }, 201);
+    },
+  );
+
+  app.get(
+    "/admin/parent-link-codes",
+    requireAuth,
+    requireMembership,
+    requireAdmin,
+    async (c) => {
+      return c.json({ codes: await listParentLinkCodes(deps.db, c.get("tenant")) });
+    },
+  );
+
+  app.post(
+    "/admin/parent-link-codes/:id/revoke",
+    requireAuth,
+    requireMembership,
+    requireAdmin,
+    async (c) => {
+      const codeId = c.req.param("id");
+      if (!codeId) return c.json({ error: "invalid_input" }, 400);
+      const result = await revokeParentLinkCode(
+        deps.db,
+        c.get("tenant"),
+        codeId,
+      );
+      if (!result.ok) return c.json({ error: result.reason }, 404);
+      return c.json({ ok: true });
+    },
+  );
+
+  // --- Sprint 003: Parent redemption + children ----------------------------
+
+  // Redeem only needs auth: a parent may not have a membership yet. The school
+  // and student are derived from the code, never from the client.
+  app.post("/parent-links/redeem", requireAuth, async (c) => {
+    const parsed = redeemLinkCodeSchema.safeParse(await readJson(c));
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    const result = await redeemParentLinkCode(
+      deps.db,
+      c.get("userId"),
+      parsed.data.code,
+      parsed.data.relationship,
+    );
+    if (!result.ok) return c.json({ error: result.reason }, 400);
+    return c.json(result, 201);
+  });
+
+  app.get("/me/children", requireAuth, async (c) => {
+    return c.json({ children: await listChildrenForParent(deps.db, c.get("userId")) });
+  });
 
   return app;
 }

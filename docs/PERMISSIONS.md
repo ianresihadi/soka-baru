@@ -79,6 +79,28 @@ Implemented:
   `soka_internal` (or smuggle a privileged role in a mixed array) through the
   public endpoint.
 
+### Sprint 003 Onboarding Access
+
+- School creation (`POST /admin/schools`) is restricted to `soka_internal`.
+- All other `/admin/*` onboarding routes require `admin_sekolah` or
+  `soka_internal` and are scoped to the caller's `school_id`.
+- Onboarding operations that take a client-supplied foreign key (class, student,
+  teacher membership) verify the referenced row belongs to the caller's tenant
+  before acting; otherwise they return 404 (or 422 for a non-teacher membership).
+- Parent link redemption (`POST /parent-links/redeem`) is a server-controlled
+  binding path: the school and student come from the code row, and it grants
+  `orang_tua` legitimately because the school issued the code. This is the safe
+  alternative to public self-binding for the `orang_tua` role. Redemption is
+  atomically single-use: it runs in a transaction and claims the code with a
+  conditional `active -> used` update, so concurrent redeems cannot double-link.
+- School creation (`POST /admin/schools`) plus admin binding are transactional;
+  an invalid `adminUserId` aborts before any school row is created.
+- Parent-child access (`GET /me/children`) is derived only from
+  `parent_student_links` of the parent's own memberships.
+- Tests: `apps/api/src/__tests__/onboarding.test.ts` proves cross-school
+  isolation for classes/students/teacher-assignments/link-codes, the link-code
+  lifecycle (used/expired/revoked), and the role guards.
+
 ### Postgres RLS — Deferred (with reason)
 
 RLS is NOT implemented in Sprint 002. SOKA Baru does not use Supabase Auth, so

@@ -125,6 +125,23 @@ The active tenant context (`school_id` + roles) is resolved server-side from
 `school_memberships`/`membership_roles` via `getActiveTenantContext`, never from
 client input.
 
+## Implemented In Sprint 003
+
+Admin onboarding tables (migration `0001_*.sql`), all school-owned:
+
+| Table | Key fields | Notes |
+|---|---|---|
+| `classes` | `id`, `school_id`, `name`, `grade_level?`, `academic_year?`, timestamps | Homeroom/class grouping. |
+| `students` | `id`, `school_id`, `full_name`, `nisn?`, `class_id?` → `classes`, `status`, timestamps | One homeroom per student (`class_id`); set via assign-class. |
+| `teacher_assignments` | `id`, `school_id`, `class_id`, `membership_id`, `role_in_class` (`wali_kelas`\|`guru`), `subject?` | Unique `(class_id, membership_id, role_in_class)`. |
+| `parent_link_codes` | `id`, `school_id`, `student_id`, `code` (unique), `status` (`active`\|`used`\|`revoked`), `expires_at`, `created_by_user_id`, `redeemed_by_user_id?`, `redeemed_at?` | School-issued, single-use parent invitation. |
+| `parent_student_links` | `id`, `school_id`, `student_id`, `parent_membership_id`, `relationship?` | Unique `(student_id, parent_membership_id)`. One parent↔many children, one child↔many parents. |
+| `audit_events` | `id`, `school_id`, `actor_user_id?`, `action`, `entity_type`, `entity_id?`, `metadata jsonb?` | Lightweight audit; currently records parent-link-code and parent-link create events. |
+
+Decisions reflected here: student↔class is a direct `class_id` FK (not a join
+table); `school_settings` is deferred to a later sprint; `audit_events`
+implements the DOMAIN-mandated lightweight audit for trust-sensitive events.
+
 ## Parent-Student Linking
 
 Session 5 confirms parent-student links are created through school-controlled invitations or link codes.

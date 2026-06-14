@@ -15,7 +15,9 @@ SOKA Baru should prove correctness through both technical tests and school-workf
 | Area | Validation Method | Status | Notes |
 |---|---|---|---|
 | Product scope | Grill decisions recorded in planning files. | In progress | Session 0 started. |
-| Role access | Permission matrix, backend tenant-isolation tests, and optional RLS tests. | Done (Sprint 002) | 12 automated tests in `apps/api/src/__tests__/tenant.test.ts`. RLS deferred. |
+| Role access | Permission matrix, backend tenant-isolation tests, and optional RLS tests. | Done (Sprint 002/003) | 42 automated tests across `tenant.test.ts` + `onboarding.test.ts`. RLS deferred. |
+| Onboarding | Tests for school/class/student/teacher setup and parent links across two schools. | Done (Sprint 003) | `apps/api/src/__tests__/onboarding.test.ts`. |
+| Parent-student links | Link-code generation, redemption, expiry/revoke, and parent-child access. | Done (Sprint 003) | Covered in `onboarding.test.ts`. |
 | Attendance | Unit/integration tests plus manual workflow check. | Not started | Core daily loop candidate. |
 | Grades | Tests for KKM, finalization, and parent visibility. | Not started | Scope needs confirmation. |
 | Parent messaging | Workflow tests across staff and parent roles. | Not started | Core communication candidate. |
@@ -51,3 +53,27 @@ What is proven (`apps/api/src/__tests__/tenant.test.ts`):
 For a live database (Neon/local Postgres), set `DATABASE_URL` then run
 `pnpm db:migrate` and `pnpm db:seed` (seeds School A, School B, and a multi-role
 user; local-dev credentials only).
+
+## Sprint 003 — Admin Onboarding
+
+Automated tests in `apps/api/src/__tests__/onboarding.test.ts` (PGlite + real
+migrations). What is proven:
+
+- Only `soka_internal` can create schools; duplicate `school_code` rejected;
+  non-internal users get 403.
+- Admin can create classes, create/import students, assign students to classes,
+  and assign teacher memberships to classes (non-teacher membership → 422).
+- Cross-school isolation: an admin cannot use another school's class, student,
+  or teacher membership id (404), and listings never include other schools' rows.
+- Parent link-code lifecycle: generate → redeem (grants `orang_tua` + link) →
+  re-redeem rejected (`code_used`); unknown, expired, and revoked codes rejected.
+- Single-use under concurrency: a conditional `active -> used` claim yields
+  exactly one winner; two concurrent redeems create exactly one link.
+- School creation with an invalid `adminUserId` creates no school (transaction
+  aborts) and returns 404.
+- `GET /me/children` returns only the parent's linked children.
+- Admin role guard: an `orang_tua` user is denied `/admin/*` (403).
+- Audit: `parent_link_code.created` and `parent_student_link.created` events are
+  recorded.
+
+Total suite: 42 tests across `tenant.test.ts` (17) and `onboarding.test.ts` (25).

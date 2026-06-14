@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is ready for Builder implementation planning.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is implemented and validated; it awaits Architect review against `acceptance.md`.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Architect Layer: Sprint 003 Admin Onboarding Minimal is ready for Builder implementation planning.
+Builder Layer: Sprint 003 Admin Onboarding Minimal implemented and validated. Pending Architect acceptance review before Sprint 004 (Guru Daily Loop) is detailed.
 
 ## Recently Completed
 
@@ -115,13 +115,24 @@ Architect Layer: Sprint 003 Admin Onboarding Minimal is ready for Builder implem
 - Architect accepted Sprint 002 after PR #1 merge. Re-review verified `pnpm@10.33.0 install --frozen-lockfile`, API tests passing 17/17, typecheck clean, and web build successful.
 - Detailed Sprint 003 requirements, blueprint, acceptance criteria, handoff prompt, and Claude start prompt.
 
+## Sprint 003 Build Notes (Builder)
+
+- Added onboarding tables (migration `0001_*`): `classes`, `students`, `teacher_assignments`, `parent_link_codes`, `parent_student_links`, `audit_events` — all carry `school_id`.
+- Added onboarding service layer `packages/db/src/onboarding.ts` with tenant-ownership checks before trusting any client-supplied foreign key.
+- Added admin onboarding API routes (`/admin/*`) and parent routes (`/parent-links/redeem`, `/me/children`).
+- School creation restricted to `soka_internal`; other onboarding requires `admin_sekolah`/`soka_internal`, scoped to the caller's school.
+- Parent link codes: single-use, default 14-day expiry, Crockford Base32, lazy expiry check; redemption is a server-controlled path that grants `orang_tua` and creates the parent-student link. Redemption is atomically single-use (transaction + conditional `active -> used` claim) so concurrent redeems cannot double-link.
+- School creation + admin binding run in one transaction; an invalid `adminUserId` aborts before any school is created (`404 admin_user_not_found`).
+- Lightweight audit via `audit_events` for parent-link-code and parent-link create events.
+- Validation: 42 tests pass (17 tenant + 25 onboarding); `pnpm typecheck` clean; `apps/web` builds.
+- Architect review fixes applied: branch rebased on latest main preserving Architect Sprint 003 handoff docs; atomic single-use redemption; transactional safe school creation.
+
 ## Next Actions
 
-- Move to Claude for Sprint 003 Builder planning.
-- Have Claude produce the pre-edit implementation plan only using `planning/sprints/003-admin-onboarding-minimal/claude-start-prompt.md`.
-- Approve the plan directly or bring it back to Architect for review before Claude edits files.
-- Optional follow-up remains: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` to exercise the full Better Auth HTTP flow end-to-end.
+- Architect reviews Sprint 003 output against `planning/sprints/003-admin-onboarding-minimal/acceptance.md`.
+- On acceptance, detail Sprint 004 Guru Daily Loop (attendance + Papan Pagi + parent messaging scope).
+- Optional follow-up: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` to exercise the full Better Auth HTTP flow end-to-end.
 
 ## Blockers
 
-- None blocking. Note: the full Better Auth HTTP sign-in/session flow has not yet been exercised against a live Neon/Postgres environment; the tenant/auth-membership logic is covered by in-process tests, and the live path is documented for verification.
+- None blocking. Note: the full Better Auth HTTP sign-in/session flow was not exercised against a live Postgres in this environment (no `DATABASE_URL`); the tenant/auth-membership/onboarding logic is covered by in-process tests, and the live path is documented for verification. Teacher account/membership creation has no admin UI yet (created via internal/seed binding); Sprint 003 only assigns existing teacher memberships to classes.
