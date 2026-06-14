@@ -71,9 +71,15 @@ export async function signOut(): Promise<boolean> {
   return res.ok;
 }
 
+/** Roles that may use the Admin / Setup workspace. */
+const ADMIN_ROLES: readonly Role[] = ["admin_sekolah", "soka_internal"];
+
+export type Workspace = "teacher" | "parent" | "admin";
+
 export interface WorkspaceAccess {
   teacher: boolean;
   parent: boolean;
+  admin: boolean;
 }
 
 /** Decide which workspaces a user can see from their membership roles. */
@@ -84,5 +90,15 @@ export function deriveWorkspaceAccess(
   return {
     teacher: TEACHER_ROLES.some((r) => roles.has(r)),
     parent: roles.has("orang_tua"),
+    admin: ADMIN_ROLES.some((r) => roles.has(r)),
   };
+}
+
+/** Ordered list of workspaces the user can open (admin last). */
+export function availableWorkspaces(access: WorkspaceAccess): Workspace[] {
+  const list: Workspace[] = [];
+  if (access.teacher) list.push("teacher");
+  if (access.parent) list.push("parent");
+  if (access.admin) list.push("admin");
+  return list;
 }

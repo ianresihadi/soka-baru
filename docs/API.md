@@ -173,3 +173,33 @@ correct when `maxScore != 100`. Grade create/update reject `score > maxScore`
 Draft grades and internal notes are never returned by parent routes. Post-publish
 grade updates are audited but do NOT emit a new parent notification. In-app only;
 no push.
+
+## Implemented In Sprint 008 (Admin Setup UI Hardening)
+
+Sprint 008 adds the Admin / Setup web workspace over the existing `/admin/*`
+onboarding routes. It introduces exactly one new backend route — a narrow,
+read-only membership listing used by the teacher-assignment selector.
+
+| Route | Required role | Purpose |
+|---|---|---|
+| `GET /admin/memberships?role=guru\|wali_kelas` | `admin_sekolah`/`soka_internal` | List same-tenant memberships for teacher assignment. Optional `role` filters to memberships holding that teacher role. |
+
+Behavior:
+
+- Read-only. No write capability, no account/role creation, no general user
+  management.
+- Tenant-scoped: returns only memberships in the caller's server-resolved
+  `school_id`; a client-supplied `schoolId` query param is ignored.
+- Returns minimal fields only: `membershipId`, `userId`, `name`, `email`,
+  `roles[]`.
+- `role` must be `guru` or `wali_kelas`; any other value returns `400
+  invalid_input`. When omitted, all same-tenant memberships are returned.
+
+The workspace reuses existing routes for the rest of setup: `GET|POST
+/admin/classes`, `GET|POST /admin/students`, `POST /admin/students/bulk`,
+`POST /admin/students/:id/assign-class`, `POST /admin/classes/:id/teachers`,
+`GET|POST /admin/parent-link-codes`, `POST /admin/parent-link-codes/:id/revoke`,
+`GET /guru/settings` (read; its existing guard already admits admin roles), and
+`PATCH /admin/school-settings` (cutoff + timezone only). `school_settings.default_kkm`
+is shown read-only in the UI; the existing PATCH does not accept it and no new
+write route was added in this sprint.

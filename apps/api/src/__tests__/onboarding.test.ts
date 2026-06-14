@@ -404,3 +404,65 @@ describe("audit trail", () => {
     expect(events.some((e) => e.action === "parent_link_code.created")).toBe(true);
   });
 });
+
+describe("admin membership listing (GET /admin/memberships)", () => {
+  type Row = { membershipId: string; userId: string; roles: string[] };
+  const list = async (query = "") => {
+    const res = await req(`/admin/memberships${query}`);
+    return {
+      status: res.status,
+      rows: res.ok
+        ? ((await res.json()) as { memberships: Row[] }).memberships
+        : [],
+    };
+  };
+
+  it("requires authentication", async () => {
+    asUser(null);
+    expect((await list()).status).toBe(401);
+  });
+
+  it("forbids a non-admin (teacher-only) caller", async () => {
+    asUser(u.teacherA); // active membership in S-A is guru/wali_kelas, no admin
+    expect((await list()).status).toBe(403);
+  });
+
+  it("forbids an orang_tua caller", async () => {
+    asUser(u.parent);
+    expect((await list()).status).toBe(403);
+  });
+
+  it("lists only same-tenant memberships for the admin", async () => {
+    asUser(u.adminA);
+    const { status, rows } = await list();
+    expect(status).toBe(200);
+    const ids = rows.map((r) => r.membershipId);
+    // School A teacher membership is present; School B's is not.
+    expect(ids).toContain(ctxIds.teacherMembershipA);
+    expect(ids).not.toContain(ctxIds.teacherMembershipB);
+  });
+
+  it("filters to teacher-eligible memberships with ?role=", async () => {
+    asUser(u.adminA);
+    const { rows } = await list("?role=guru");
+    const ids = rows.map((r) => r.membershipId);
+    expect(ids).toContain(ctxIds.teacherMembershipA); // has guru
+    // Parent-only and admin-only memberships are excluded by the teacher filter.
+    expect(ids).not.toContain(ctxIds.nonTeacherMembershipA);
+    expect(rows.every((r) => r.roles.includes("guru"))).toBe(true);
+  });
+
+  it("rejects an unsupported role filter", async () => {
+    asUser(u.adminA);
+    expect((await list("?role=orang_tua")).status).toBe(400);
+  });
+
+  it("ignores a client-supplied school_id query param", async () => {
+    asUser(u.adminA);
+    // Smuggle School B's id; the server must scope to the caller's tenant only.
+    const { rows } = await list(`?schoolId=${ctxIds.schoolB}`);
+    const ids = rows.map((r) => r.membershipId);
+    expect(ids).toContain(ctxIds.teacherMembershipA);
+    expect(ids).not.toContain(ctxIds.teacherMembershipB);
+  });
+});

@@ -116,6 +116,7 @@ async function main() {
   const userA = await ensureUser("guru.a@example.com", "Guru Alpha");
   const userB = await ensureUser("guru.b@example.com", "Guru Beta");
   const userMulti = await ensureUser("multi@example.com", "Wali dan Ortu");
+  const userAdmin = await ensureUser("admin.a@example.com", "Admin Alpha");
 
   // User A: School A, single school, two roles.
   const bindA = await bindUserToSchoolByCode(getDb(), userA, "SOKA-A", [
@@ -129,6 +130,9 @@ async function main() {
     "wali_kelas",
     "orang_tua",
   ]);
+  // School A admin (privileged role via internal/seed path, never public
+  // self-binding) so the Admin / Setup workspace can be rehearsed locally.
+  await bindUserToSchoolByCode(getDb(), userAdmin, "SOKA-A", ["admin_sekolah"]);
 
   // --- Pilot rehearsal happy-path data (School A only) ---------------------
   // Gives one teacher path (assigned class + roster) and one parent path
@@ -149,8 +153,8 @@ async function main() {
   await getPool().end();
   console.log("Seed complete (LOCAL DEV ONLY credentials).");
   console.log(`  Schools: SOKA-A (SD Soka Alpha), SOKA-B (SD Soka Beta)`);
-  console.log(`  Users: guru.a@example.com, guru.b@example.com, multi@example.com`);
-  console.log(`  School A demo: Kelas 1A · 3 siswa · guru.a wali kelas · multi ortu Adinda Putri`);
+  console.log(`  Users: guru.a@example.com, guru.b@example.com, multi@example.com, admin.a@example.com`);
+  console.log(`  School A demo: Kelas 1A · 3 siswa · guru.a wali kelas · multi ortu Adinda Putri · admin.a admin_sekolah`);
   console.log(`  Password (local dev only): ${LOCAL_PASSWORD}`);
 }
 

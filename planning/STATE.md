@@ -5,13 +5,29 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is detailed and ready for Builder implementation planning.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is implemented by Builder and ready for Architect review (PR not merged).
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Builder Layer: Sprint 008 Admin Setup UI Hardening is ready for Claude pre-edit implementation planning. Claude must start from `planning/sprints/008-admin-setup-ui-hardening/claude-start-prompt.md`, produce a plan first, and wait for Ian approval before editing files.
+Builder Layer: Sprint 008 Admin Setup UI Hardening is implemented on branch `claude/sprint-008-admin-setup` and awaiting Architect review. The pre-edit plan was approved by Ian with Architect guardrails (admin-only workspace; only the narrow read-only `GET /admin/memberships` backend addition; no client `school_id`; no user/role creation, payments, documents, broadcast, push, principal analytics; parent visibility unchanged). No PR merged.
+
+## Sprint 008 Build Notes (Builder)
+
+- Added a third app-shell workspace, **Admin / Setup**, visible only to `admin_sekolah`/`soka_internal`: `apps/web/src/AdminSetupWorkspace.tsx` (six sections — overview, classes, students, teacher assignment, parent link codes, settings — with chip nav, per-action notices, loading/empty states) and `apps/web/src/adminSetupApi.ts` (typed client over existing `/admin/*` routes + the new membership listing). Updated `api.ts` (admin in `WorkspaceAccess` + `availableWorkspaces`), `RoleSwitcher.tsx` (renders available workspaces), `AppShell.tsx` (admin workspace + 2–3-way switcher). Never sends `school_id`.
+- One narrow backend addition: read-only `GET /admin/memberships?role=guru|wali_kelas` (admin-only, same-tenant, ignores client `schoolId`, minimal fields), backed by `listTeacherMembershipsForTenant` in `packages/db/src/onboarding.ts`. No schema/migration. No user/role creation. No change to parent visibility, teacher class access, or onboarding behavior.
+- Seed: added `admin.a@example.com` (`admin_sekolah`, School A) via the internal binding path (idempotent, local-dev only) so the admin workspace is demoable.
+- Settings UI edits cutoff + timezone (existing PATCH); `default_kkm` is read-only because the existing API does not accept it and guardrail #5 limited the only backend addition to the membership endpoint — documented as a deferral.
+- Tests: +7 focused tests for `GET /admin/memberships` (auth, admin guard, same-tenant isolation, role filtering, reject bad role, ignore client `schoolId`). Total **107 passing** (onboarding 32; others unchanged).
+- Validation: `pnpm install` ok; `pnpm test` 107/107; `pnpm typecheck` clean; `pnpm --filter @soka/web build` ok; `pnpm validate` ok. Live DB/admin HTTP flow not exercised here (no `DATABASE_URL`); documented in SETUP + smoke checklist.
+- Docs updated: `docs/API.md`, `docs/PERMISSIONS.md`, `docs/VALIDATION.md`, `docs/SETUP.md`, `docs/PILOT_SMOKE_CHECKLIST.md`, and Sprint 008 completion notes. `planning/DECISIONS.md` unchanged.
+
+## Next Actions (Sprint 008)
+
+- Architect review of the Sprint 008 branch against the acceptance gate (admin-only workspace, no dead nav, tenant isolation incl. the new endpoint, parent visibility intact, passing validation, actionable docs, no scope creep).
+- Optional live verification: `pnpm db:migrate` + `pnpm db:seed`, then walk the admin setup path in `docs/PILOT_SMOKE_CHECKLIST.md` as `admin.a@example.com`.
+- Do not start Sprint 009 until Sprint 008 is accepted.
 
 ## Recently Completed
 

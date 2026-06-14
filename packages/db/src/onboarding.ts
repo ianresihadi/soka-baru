@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { and, eq, inArray } from "drizzle-orm";
-import type { TenantContext } from "@soka/shared";
+import type { Role, TenantContext } from "@soka/shared";
 import type { Database } from "./client";
 import { TenantViolationError } from "./repositories";
 import {
@@ -253,6 +253,53 @@ export async function assignTeacherToClass(
     })
     .onConflictDoNothing();
   return { ok: true };
+}
+
+/**
+ * Narrow, read-only listing of same-tenant memberships for the Admin Setup UI's
+ * teacher-assignment selector. NOT general user management:
+ * - scoped strictly to ctx.schoolId (server-derived; no client school_id);
+ * - returns only the minimal fields needed to pick a membership;
+ * - optional roleFilter keeps only memberships holding one of those roles
+ *   (used to show teacher-eligible memberships for class assignment).
+ */
+export interface TenantMembershipSummary {
+  membershipId: string;
+  userId: string;
+  name: string;
+  email: string;
+  roles: Role[];
+}
+
+export async function listTeacherMembershipsForTenant(
+  db: Database,
+  ctx: TenantContext,
+  roleFilter?: Role[],
+): Promise<TenantMembershipSummary[]> {
+  const rows = await db
+    .select({
+      membershipId: schoolMemberships.id,
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+    })
+    .from(schoolMemberships)
+    .innerJoin(user, eq(schoolMemberships.userId, user.id))
+    .where(eq(schoolMemberships.schoolId, ctx.schoolId));
+
+  const result: TenantMembershipSummary[] = [];
+  for (const row of rows) {
+    const roleRows = await db
+      .select({ role: membershipRoles.role })
+      .from(membershipRoles)
+      .where(eq(membershipRoles.membershipId, row.membershipId));
+    const roles = roleRows.map((r) => r.role as Role);
+    if (roleFilter && roleFilter.length > 0) {
+      if (!roles.some((r) => roleFilter.includes(r))) continue;
+    }
+    result.push({ ...row, roles });
+  }
+  return result;
 }
 
 // ---------------------------------------------------------------------------
