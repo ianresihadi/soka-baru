@@ -1,17 +1,17 @@
 # Project State
 
 **Project:** SOKA Baru
-**Last updated:** 2026-06-14
+**Last updated:** 2026-06-15
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is detailed and ready for Builder implementation planning.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Architect checkpoint after Sprint 007. No active Builder sprint is approved right now. Claude should not begin Sprint 008 until Architect creates detailed sprint artifacts and Ian approves the handoff.
+Builder Layer: Sprint 008 Admin Setup UI Hardening is ready for Claude pre-edit implementation planning. Claude must start from `planning/sprints/008-admin-setup-ui-hardening/claude-start-prompt.md`, produce a plan first, and wait for Ian approval before editing files.
 
 ## Recently Completed
 
@@ -219,10 +219,18 @@ Architect checkpoint after Sprint 007. No active Builder sprint is approved righ
 - The biggest remaining pilot gap is practical school setup by a non-technical operator. Today, realistic onboarding still depends on seed/internal paths or API calls for school/class/student/teacher/parent-link setup.
 - Recommended next direction: Sprint 008 should be **Admin Setup UI Hardening**, focused on making the already-built onboarding APIs usable through a constrained internal/admin setup surface.
 
+## Sprint 008 Handoff Notes (Architect)
+
+- Detailed Sprint 008 requirements, blueprint, acceptance criteria, handoff prompt, Claude start prompt, and placeholder completion notes.
+- Sprint 008 scope is a constrained admin/setup workspace: classes, students, simple bulk student input, class assignment, teacher assignment, parent link code generation/list/revoke, and existing school settings fields.
+- Sprint 008 may add a narrow same-tenant teacher-membership listing endpoint only if needed for safe teacher assignment UI; it must be role-guarded and tested.
+- Sprint 008 explicitly defers full TU/admin product, general user management, public privileged role assignment, payments/finance, documents/letters, government reporting, principal analytics, student login/learning workflows, broadcast/pengumuman, push delivery, and Sprint 009.
+
 ## Next Actions
 
-- Architect should detail Sprint 008 requirements, blueprint, acceptance criteria, handoff prompt, and Claude start prompt before Builder starts.
-- Recommended Sprint 008 track: Admin Setup UI Hardening, limited to the setup workflows already supported by Sprint 003 APIs.
+- Move to Claude with `planning/sprints/008-admin-setup-ui-hardening/claude-start-prompt.md`.
+- Ask Claude to read the required files and produce the pre-edit implementation plan only.
+- Bring Claude's plan back to Architect if it adds full TU/user-management scope, changes auth/tenancy/permissions, changes parent visibility, or expands beyond setup hardening.
 - Optional live verification remains useful: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` and walk `docs/PILOT_SMOKE_CHECKLIST.md` end-to-end.
 
 ## Blockers

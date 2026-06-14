@@ -31,9 +31,9 @@ Do not use this file as a dumping ground for project history or sprint details.
 
 ## Current Builder Entry Point
 
-No active Builder sprint is approved right now.
+For Sprint 008, start from:
 
-Sprint 007 is merged and accepted. Wait for Architect to detail and approve
-Sprint 008 before implementation planning. Do not start Sprint 008 from chat
-context or memory; start only from the future
-`planning/sprints/008-*/claude-start-prompt.md` after it exists.
+`planning/sprints/008-admin-setup-ui-hardening/claude-start-prompt.md`
+
+First produce the pre-edit implementation plan only. Do not edit files until Ian
+approves the plan or asks for Architect review.

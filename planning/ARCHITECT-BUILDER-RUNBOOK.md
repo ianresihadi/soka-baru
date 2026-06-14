@@ -60,9 +60,9 @@ Move to Claude when all of these are true:
 - The stack and core business rules needed by the sprint are no longer open questions.
 - The Builder can implement without inventing product scope.
 
-For the current project state, Ian should stay with Architect.
+For the current project state, Ian can move to Claude for Sprint 008 pre-edit implementation planning.
 
-Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008 is not yet detailed. Claude should not begin Sprint 008 until Architect creates detailed sprint artifacts and Ian approves the handoff.
+Sprint 008: Admin Setup UI Hardening is detailed and ready for Builder planning. Claude must start from `planning/sprints/008-admin-setup-ui-hardening/claude-start-prompt.md`, produce a plan first, and wait for Ian approval before editing files.
 
 ## When To Stay With Architect
 
@@ -183,18 +183,18 @@ Current status:
 - Sprint 005 Parent Trust Loop is merged and accepted.
 - Sprint 006 Nilai & Catatan is merged and accepted.
 - Sprint 007 Pilot Readiness & App Shell is merged and accepted.
-- No active Builder sprint is approved right now.
+- Sprint 008 Admin Setup UI Hardening is ready for Builder implementation planning.
 
-Claude must not build Sprint 008 from conversation context. Sprint 008 must first have detailed `requirements.md`, `blueprint.md`, `acceptance.md`, `handoff-prompt.md`, and `claude-start-prompt.md`.
+Claude must implement Sprint 008 only after Ian approves the pre-edit plan. Claude must not build a full TU/admin product, general user management, payments, documents, principal analytics, student login, broadcast/pengumuman, push delivery, or Sprint 009 work.
 
 ## Recommended Ian Workflow Right Now
 
-1. Stay with Architect for Sprint 008 selection/detailing.
-2. Recommended next track: Admin Setup UI Hardening.
-3. Ask Architect to detail Sprint 008 requirements, blueprint, acceptance criteria, handoff prompt, and Claude start prompt.
-4. Move to Claude only after the Sprint 008 handoff exists and Ian approves it.
-5. Ask Claude for a pre-edit implementation plan only.
-6. Bring Claude's plan back to Architect if it changes scope, permissions, data ownership, deployment posture, parent visibility, or role behavior.
+1. Open Claude in `C:\Users\USER\Documents\SOKA`.
+2. Paste the Sprint 008 Claude start prompt from `planning/sprints/008-admin-setup-ui-hardening/claude-start-prompt.md`.
+3. Ask Claude to read files and produce the pre-edit implementation plan only.
+4. Review Claude's plan.
+5. If the plan stays inside Sprint 008, approve implementation.
+6. If the plan changes scope, permissions, data ownership, deployment posture, parent visibility, or role behavior, bring it back to Architect before coding.
 
 ## Architect Review Checklist For The Next Builder Plan
 
@@ -202,12 +202,12 @@ Claude's plan is acceptable if it:
 
 - Uses React/Vite/TypeScript/Tailwind, Hono, Drizzle, Better Auth, and Neon Postgres.
 - Does not reintroduce Supabase as the baseline backend.
-- Adds only the approved next sprint workflows once Sprint 008 is detailed.
+- Adds only the approved Sprint 008 setup-hardening work: constrained admin setup workspace, class/student setup, teacher assignment, parent link codes, and existing school settings fields.
 - Enforces tenant isolation from server-side membership context, not client `school_id`.
 - Respects parent access rules from `parent_student_links` and the caller's memberships.
 - Keeps MVP module boundaries from `planning/MODULE-CLASSIFICATION.md`.
 - Includes validation proving School A cannot access School B.
-- Stays out of full raport/finalization, formulas/averages/ranking, behavior scoring, case management, assignments/materials/student login, payments/premium, forum, broadcast campaigns, push delivery, and any future module not explicitly approved for the sprint.
+- Stays out of full TU/admin product, general user management, public privileged role assignment, payment/finance, documents/letters, government reporting, principal analytics, student login, learning workflows, broadcast/pengumuman, push delivery, and Sprint 009.
 
 ## Completion Gate For Future Sprints
 
