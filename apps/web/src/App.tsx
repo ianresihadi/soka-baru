@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { MembershipSummary } from "@soka/shared";
 import { PapanPagi } from "./PapanPagi";
+import { ParentHome } from "./ParentHome";
 
 /**
  * Minimal Sprint 002 validation UI. Not a product screen.
@@ -12,6 +13,7 @@ export function App() {
   const [password, setPassword] = useState("LocalDevPassword123!");
   const [log, setLog] = useState<string[]>([]);
   const [memberships, setMemberships] = useState<MembershipSummary[]>([]);
+  const [view, setView] = useState<"teacher" | "parent">("teacher");
 
   const append = (line: string) => setLog((prev) => [line, ...prev]);
 
@@ -110,7 +112,24 @@ export function App() {
         {log.join("\n")}
       </pre>
 
-      <PapanPagi />
+      <div className="mt-8 flex gap-2 border-b">
+        <button
+          type="button"
+          className={`px-3 py-2 text-sm ${view === "teacher" ? "border-b-2 border-blue-600 font-medium" : "text-gray-500"}`}
+          onClick={() => setView("teacher")}
+        >
+          Guru (Papan Pagi)
+        </button>
+        <button
+          type="button"
+          className={`px-3 py-2 text-sm ${view === "parent" ? "border-b-2 border-blue-600 font-medium" : "text-gray-500"}`}
+          onClick={() => setView("parent")}
+        >
+          Orang Tua (Beranda Anak)
+        </button>
+      </div>
+
+      {view === "teacher" ? <PapanPagi /> : <ParentHome />}
     </div>
   );
 }

@@ -15,7 +15,8 @@ SOKA Baru should prove correctness through both technical tests and school-workf
 | Area | Validation Method | Status | Notes |
 |---|---|---|---|
 | Product scope | Grill decisions recorded in planning files. | In progress | Session 0 started. |
-| Role access | Permission matrix, backend tenant-isolation tests, and optional RLS tests. | Done (Sprint 002/003/004) | 62 automated tests across `tenant`/`onboarding`/`daily-loop`. RLS deferred. |
+| Role access | Permission matrix, backend tenant-isolation tests, and optional RLS tests. | Done (Sprint 002/003/004/005) | 78 automated tests across `tenant`/`onboarding`/`daily-loop`/`parent-trust`. RLS deferred. |
+| Parent messaging | Workflow tests across staff and parent roles. | Done (Sprint 004/005) | Teacher side in `daily-loop`; parent side in `parent-trust`. |
 | Attendance | Unit/integration tests plus manual workflow check. | Done (Sprint 004) | `apps/api/src/__tests__/daily-loop.test.ts`. |
 | Onboarding | Tests for school/class/student/teacher setup and parent links across two schools. | Done (Sprint 003) | `apps/api/src/__tests__/onboarding.test.ts`. |
 | Parent-student links | Link-code generation, redemption, expiry/revoke, and parent-child access. | Done (Sprint 003) | Covered in `onboarding.test.ts`. |
@@ -117,3 +118,24 @@ pnpm test
 pnpm typecheck
 pnpm --filter @soka/web build
 ```
+
+## Sprint 005 — Parent Trust Loop
+
+Automated tests in `apps/api/src/__tests__/parent-trust.test.ts` (PGlite + real
+migrations). What is proven:
+
+- Parent lists only linked children; no-child parent gets a calm empty home.
+- Beranda Anak returns selected child, today's attendance, recent history,
+  latest notification/thread, and a neutral "belum tercatat" when unrecorded.
+- A parent cannot access another parent's child by `studentId` (home/attendance).
+- Attendance history is linked-child-only, newest-first, with a max limit; there
+  is no parent attendance mutation path.
+- Notifications are caller-owned only; mark-read updates only owned rows and
+  reports the true updated count; a foreign id stays unread.
+- Threads/messages are linked-child-only; another parent's thread is not found;
+  sending for an unlinked/cross-school child is rejected.
+- `orang_tua` cannot access `/guru/*`; `/parent/home` returns 403 for an
+  unlinked `studentId`; `/parent/children` works over session only.
+
+Total suite: 78 tests across `tenant` (17), `onboarding` (25), `daily-loop` (20),
+`parent-trust` (16). No schema change in Sprint 005 (reused `notifications.read_at`).

@@ -120,3 +120,27 @@ Notification records are created only for `sakit`/`izin`/`alpa`/`terlambat`
 `PATCH /admin/school-settings` validates `schoolTimezone` against the runtime's
 `Intl` timezone database and returns `400 invalid_input` for an unknown zone, so
 a bad value can never be saved and break Papan Pagi/attendance.
+
+## Implemented In Sprint 005 (Parent Trust Loop)
+
+Parent routes require only an authenticated session (`requireAuth`, not
+`requireMembership`). Access is derived from `parent_student_links` joined to the
+caller's memberships; no route accepts `school_id` and a parent can only reach
+linked children. List endpoints have default and max limits.
+
+| Route | Auth | Purpose |
+|---|---|---|
+| `GET /parent/children` | session | Linked children with class/school context (deterministic order). |
+| `GET /parent/home?studentId` | session | Beranda Anak aggregate; `403 not_linked` for an unlinked `studentId`; calm empty state when no children. |
+| `GET /parent/attendance?studentId&from&to&limit` | session | Read-only attendance history for a linked child (default 30, max 100). |
+| `GET /parent/notifications?studentId&limit` | session | Caller-owned notifications, optional child filter (default 50, max 100). |
+| `POST /parent/notifications/read` | session | Mark caller-owned notifications read; returns the count actually updated. |
+| `GET /parent/messages/threads?studentId&limit` | session | Threads for linked children (default 50, max 100). |
+| `GET /parent/messages/threads/:threadId` | session | Thread detail + chronological messages (`404` if not the caller's thread). |
+| `POST /parent/messages` | session + linked parent | Existing send route (verifies the parent-student link). |
+
+Beranda Anak returns selected child, child list (switcher), today's attendance
+(or neutral null), a simple non-scoring `reassurance` (`headline`,
+`needsAction`, `reasons`), latest notification, latest message thread, and
+recent attendance. There is no parent attendance write path. In-app only; no
+push. Grades/notes are not implemented (deferred to Sprint 006).

@@ -171,3 +171,54 @@ export type AttendanceCompletion =
   | "in_progress"
   | "completed_on_time"
   | "completed_late";
+
+// --- Sprint 005: Parent trust loop -------------------------------------------
+
+/** Shared limit bounds for parent list endpoints. */
+export const PARENT_LIMITS = {
+  attendance: { default: 30, max: 100 },
+  notifications: { default: 50, max: 100 },
+  threads: { default: 50, max: 100 },
+} as const;
+
+export function clampLimit(
+  value: number | undefined,
+  bounds: { default: number; max: number },
+): number {
+  if (value === undefined || Number.isNaN(value)) return bounds.default;
+  return Math.min(Math.max(1, Math.trunc(value)), bounds.max);
+}
+
+export const parentChildQuerySchema = z.object({
+  studentId: z.string().uuid().optional(),
+});
+export type ParentChildQuery = z.infer<typeof parentChildQuerySchema>;
+
+export const parentAttendanceQuerySchema = z.object({
+  studentId: z.string().uuid().optional(),
+  from: attendanceDateSchema.optional(),
+  to: attendanceDateSchema.optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
+});
+export type ParentAttendanceQuery = z.infer<typeof parentAttendanceQuerySchema>;
+
+export const parentNotificationsQuerySchema = z.object({
+  studentId: z.string().uuid().optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
+});
+export type ParentNotificationsQuery = z.infer<
+  typeof parentNotificationsQuerySchema
+>;
+
+export const markNotificationsReadSchema = z.object({
+  notificationIds: z.array(z.string().uuid()).min(1).max(100),
+});
+export type MarkNotificationsReadInput = z.infer<
+  typeof markNotificationsReadSchema
+>;
+
+export const parentThreadsQuerySchema = z.object({
+  studentId: z.string().uuid().optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
+});
+export type ParentThreadsQuery = z.infer<typeof parentThreadsQuerySchema>;
