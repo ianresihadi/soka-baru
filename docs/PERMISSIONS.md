@@ -111,6 +111,22 @@ Implemented:
 - Notification access (`GET /me/notifications`) is limited to the caller's own
   memberships.
 - Tests prove a School A teacher cannot operate School B classes/students.
+
+### Sprint 005 Parent Trust-Loop Access
+
+- Parent routes (`/parent/*`) authenticate with session only; access is derived
+  from `parent_student_links` joined to the caller's memberships — never an
+  active tenant or a client-supplied `school_id`.
+- A parent can only read a child's home/attendance/notifications/threads when
+  that child is linked to them; guessing another child's `studentId` returns
+  `403 not_linked` (or an empty/`404` for threads).
+- A parent can only mark their own notifications read; foreign ids are ignored
+  and the mark-read result reports the true updated count.
+- A parent can only list/view/send messages for linked children; another
+  parent's thread returns `404 thread_not_found`.
+- Parents have no attendance mutation path; `orang_tua` remains blocked from
+  `/guru/*`.
+- Tests prove cross-school and cross-parent isolation.
 - Parent-child access (`GET /me/children`) is derived only from
   `parent_student_links` of the parent's own memberships.
 - Tests: `apps/api/src/__tests__/onboarding.test.ts` proves cross-school

@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is detailed and ready for Builder pre-edit implementation planning.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is implemented and validated; it awaits Architect review against `acceptance.md`.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Architect Layer: Sprint 005 Parent Trust Loop handoff is ready. Builder should start from `planning/sprints/005-parent-trust-loop/claude-start-prompt.md` and produce the required pre-edit plan before implementation.
+Builder Layer: Sprint 005 Parent Trust Loop implemented and validated. Pending Architect acceptance review before Sprint 006 (Nilai & Catatan) is detailed.
 
 ## Recently Completed
 
@@ -156,11 +156,19 @@ Architect Layer: Sprint 005 Parent Trust Loop handoff is ready. Builder should s
 - Parent access must come only from `parent_student_links` and the caller's memberships. No route may trust client-supplied `school_id`.
 - Sprint 005 explicitly defers grades/raport, student notes, payments, parent premium, assignments, materials, forum/social features, native/browser push delivery, full chat polish, and Sprint 006 work.
 
+## Sprint 005 Build Notes (Builder)
+
+- No new migration: reused Sprint 003/004 schema (`parent_student_links`, `students`, `classes`, `attendance_records`, `notifications.read_at`, `message_threads`, `messages`).
+- Added `packages/db/src/parentTrust.ts`: linked children (deterministic order), `assertParentCanAccessStudent`, Beranda Anak aggregate, read-only attendance history, notifications list + mark-read (returns true updated count), message thread list/detail. Reused `createParentMessage`/`listNotificationsForUser`.
+- Added parent API routes (`/parent/children|home|attendance|notifications|notifications/read|messages/threads|messages/threads/:id`); `requireAuth` only, access via `parent_student_links` + memberships; default + max list limits.
+- Beranda Anak `reassurance` is a simple non-scoring summary (`headline`, `needsAction`, `reasons`); unrecorded attendance is neutral, never treated as alpa.
+- Added mobile-first parent UI (`apps/web` Teacher|Parent tab + `ParentHome.tsx`): child switcher, Beranda summary, notifications + mark-read, attendance history, message thread/detail/send.
+- Validation: 79 tests pass (17 tenant + 25 onboarding + 20 daily-loop + 17 parent-trust); `pnpm typecheck` clean; `apps/web` builds. (Includes Architect PR #4 fix: `needsAction` detects any unread notification, not just the latest.)
+
 ## Next Actions
 
-- Ian may move to Claude for Sprint 005 Builder planning using `planning/sprints/005-parent-trust-loop/claude-start-prompt.md`.
-- Builder must produce the Sprint 005 pre-edit implementation plan before coding.
-- If Builder changes product scope, parent access rules, tenant isolation, notification rules, or message rules, return to Architect before implementation.
+- Architect reviews Sprint 005 output against `planning/sprints/005-parent-trust-loop/acceptance.md`.
+- On acceptance, detail Sprint 006 Nilai & Catatan.
 - Optional follow-up: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` to exercise the full Better Auth HTTP flow end-to-end.
 
 ## Blockers

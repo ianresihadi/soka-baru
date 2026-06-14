@@ -10,6 +10,13 @@ import {
   createStudent,
   createStudents,
   createParentMessage,
+  getParentAttendanceHistory,
+  getParentHome,
+  getParentMessageThread,
+  listLinkedChildrenForParent,
+  listParentMessageThreads,
+  listParentNotifications,
+  markParentNotificationsRead,
   getActiveTenantContext,
   getOrCreateSchoolSettings,
   getPapanPagi,
@@ -43,6 +50,11 @@ import {
   createStudentSchema,
   papanPagiQuerySchema,
   parentMessageSchema,
+  parentAttendanceQuerySchema,
+  parentChildQuerySchema,
+  parentNotificationsQuerySchema,
+  parentThreadsQuerySchema,
+  markNotificationsReadSchema,
   redeemLinkCodeSchema,
   schoolBindingSchema,
   schoolSettingsUpdateSchema,
@@ -508,6 +520,99 @@ export function createApp(deps: AppDeps) {
     return c.json({
       notifications: await listNotificationsForUser(deps.db, c.get("userId")),
     });
+  });
+
+  // --- Sprint 005: Parent trust loop ---------------------------------------
+  // Parent routes require only an authenticated session. Data access is derived
+  // from parent_student_links + the caller's memberships (never an active tenant
+  // or a client-supplied school_id).
+
+  app.get("/parent/children", requireAuth, async (c) => {
+    return c.json({
+      children: await listLinkedChildrenForParent(deps.db, c.get("userId")),
+    });
+  });
+
+  app.get("/parent/home", requireAuth, async (c) => {
+    const parsed = parentChildQuerySchema.safeParse({
+      studentId: c.req.query("studentId"),
+    });
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    const result = await getParentHome(deps.db, c.get("userId"), parsed.data);
+    if (!result.ok) return c.json({ error: result.reason }, 403);
+    return c.json(result);
+  });
+
+  app.get("/parent/attendance", requireAuth, async (c) => {
+    const parsed = parentAttendanceQuerySchema.safeParse({
+      studentId: c.req.query("studentId"),
+      from: c.req.query("from"),
+      to: c.req.query("to"),
+      limit: c.req.query("limit"),
+    });
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    const result = await getParentAttendanceHistory(
+      deps.db,
+      c.get("userId"),
+      parsed.data,
+    );
+    if (!result.ok) {
+      return c.json({ error: result.reason }, result.reason === "no_child" ? 404 : 403);
+    }
+    return c.json(result);
+  });
+
+  app.get("/parent/notifications", requireAuth, async (c) => {
+    const parsed = parentNotificationsQuerySchema.safeParse({
+      studentId: c.req.query("studentId"),
+      limit: c.req.query("limit"),
+    });
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    const result = await listParentNotifications(
+      deps.db,
+      c.get("userId"),
+      parsed.data,
+    );
+    if (!result.ok) return c.json({ error: result.reason }, 403);
+    return c.json({ notifications: result.items });
+  });
+
+  app.post("/parent/notifications/read", requireAuth, async (c) => {
+    const parsed = markNotificationsReadSchema.safeParse(await readJson(c));
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    const result = await markParentNotificationsRead(
+      deps.db,
+      c.get("userId"),
+      parsed.data,
+    );
+    return c.json(result);
+  });
+
+  app.get("/parent/messages/threads", requireAuth, async (c) => {
+    const parsed = parentThreadsQuerySchema.safeParse({
+      studentId: c.req.query("studentId"),
+      limit: c.req.query("limit"),
+    });
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    const result = await listParentMessageThreads(
+      deps.db,
+      c.get("userId"),
+      parsed.data,
+    );
+    if (!result.ok) return c.json({ error: result.reason }, 403);
+    return c.json({ threads: result.items });
+  });
+
+  app.get("/parent/messages/threads/:threadId", requireAuth, async (c) => {
+    const threadId = c.req.param("threadId");
+    if (!threadId) return c.json({ error: "invalid_input" }, 400);
+    const result = await getParentMessageThread(
+      deps.db,
+      c.get("userId"),
+      threadId,
+    );
+    if (!result.ok) return c.json({ error: result.reason }, 404);
+    return c.json(result);
   });
 
   return app;
