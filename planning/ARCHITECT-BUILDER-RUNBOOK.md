@@ -60,9 +60,9 @@ Move to Claude when all of these are true:
 - The stack and core business rules needed by the sprint are no longer open questions.
 - The Builder can implement without inventing product scope.
 
-For the current project state, Ian can move to Claude now for Sprint 004.
+For the current project state, Ian can move to Claude now for Sprint 005.
 
-Sprint 004 is ready for Builder implementation planning. The Builder must still summarize its plan before coding.
+Sprint 005 is ready for Builder implementation planning. The Builder must still summarize its plan before coding.
 
 ## When To Stay With Architect
 
@@ -172,25 +172,26 @@ Architect checks:
 - docs reflect reality
 - next sprint can safely begin
 
-## Current Sprint: 004 Guru Daily Loop
+## Current Sprint: 005 Parent Trust Loop
 
 Current status:
 
 - Sprint 001 Discovery & Architecture is complete.
 - Sprint 002 Foundation Data/Auth is merged and accepted.
 - Sprint 003 Admin Onboarding Minimal is merged and accepted.
-- Sprint 004 Guru Daily Loop is ready for Builder implementation planning.
-- Claude can begin from `planning/sprints/004-guru-daily-loop/claude-start-prompt.md`.
+- Sprint 004 Guru Daily Loop is merged and accepted.
+- Sprint 005 Parent Trust Loop is ready for Builder implementation planning.
+- Claude can begin from `planning/sprints/005-parent-trust-loop/claude-start-prompt.md`.
 
-Claude must implement Sprint 004 only. Claude must not start Sprint 005 Parent Trust Loop, full chat, grades/raport, student notes, payment, LMS, principal analytics, or push-delivery work.
+Claude must implement Sprint 005 only. Claude must not start Sprint 006 Nilai & Catatan, grades/raport, student notes, payment, parent premium, assignments, materials, forum, native/browser push delivery, or full chat polish.
 
 ## Recommended Ian Workflow Right Now
 
 1. Open Claude in `C:\Users\USER\Documents\SOKA`.
-2. Paste the Sprint 004 Claude start prompt from `planning/sprints/004-guru-daily-loop/claude-start-prompt.md`.
+2. Paste the Sprint 005 Claude start prompt from `planning/sprints/005-parent-trust-loop/claude-start-prompt.md`.
 3. Ask Claude to read files and produce the pre-edit implementation plan only.
 4. Review Claude's plan.
-5. If the plan is clear and stays inside Sprint 004, approve implementation.
+5. If the plan is clear and stays inside Sprint 005, approve implementation.
 6. If the plan changes scope or raises architecture questions, bring it back to Architect before coding.
 
 ## Architect Review Checklist For Claude's Plan
@@ -199,23 +200,22 @@ Claude's plan is acceptable if it:
 
 - Uses React/Vite/TypeScript/Tailwind, Hono, Drizzle, Better Auth, and Neon Postgres.
 - Does not reintroduce Supabase as the baseline backend.
-- Adds only the approved Sprint 004 tables/workflows: school settings, attendance, minimal messages, notifications, Papan Pagi, and teacher validation UI.
+- Adds only the approved Sprint 005 parent trust-loop workflows: linked children, Beranda Anak, attendance visibility, notifications, parent message view/send, and parent validation UI.
 - Enforces tenant isolation from server-side membership context, not client `school_id`.
-- Enforces teacher class access through `teacher_assignments`.
-- Keeps attendance statuses limited to `hadir`, `sakit`, `izin`, `alpa`, and `terlambat`.
-- Creates notification records only for `sakit`, `izin`, `alpa`, and `terlambat`, not `hadir`.
-- Includes post-day attendance correction reason and audit behavior.
-- Treats parent messaging as a minimal unreplied-message scaffold, not a full chat/SLA product.
+- Derives parent access only from `parent_student_links` and the caller's memberships.
+- Keeps parent attendance read-only.
+- Treats parent messages as minimal thread/detail/send, not full chat/SLA product.
+- Keeps notifications in-app only.
 - Includes validation proving School A cannot access School B.
-- Stays out of Sprint 005/006 and later modules.
+- Stays out of grades/notes/payments/premium/tasks/materials/forum/native push and Sprint 006.
 
-## Completion Gate For Sprint 004
+## Completion Gate For Sprint 005
 
-Sprint 004 should not be considered complete until:
+Sprint 005 should not be considered complete until:
 
-- Builder has implemented the approved Guru Daily Loop scope.
-- Validation proves attendance rules, message scaffold, notifications, teacher class access, and cross-school isolation.
+- Builder has implemented the approved Parent Trust Loop scope.
+- Validation proves linked-child access, parent home, attendance visibility, notification read state, parent messages, and cross-school/cross-parent isolation.
 - Docs are updated.
 - Architect reviews the output against `acceptance.md`.
 
-Only after that should Architect prepare Sprint 005 Parent Trust Loop in detail.
+Only after that should Architect prepare Sprint 006 Nilai & Catatan in detail.

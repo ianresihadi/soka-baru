@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is implemented and validated; it awaits Architect review against `acceptance.md`.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is detailed and ready for Builder pre-edit implementation planning.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Builder Layer: Sprint 004 Guru Daily Loop implemented and validated. Pending Architect acceptance review before Sprint 005 (Parent Trust Loop) is detailed.
+Architect Layer: Sprint 005 Parent Trust Loop handoff is ready. Builder should start from `planning/sprints/005-parent-trust-loop/claude-start-prompt.md` and produce the required pre-edit plan before implementation.
 
 ## Recently Completed
 
@@ -147,11 +147,20 @@ Builder Layer: Sprint 004 Guru Daily Loop implemented and validated. Pending Arc
 - Parent-message scaffold (thread + messages), unreplied = parent message newer than last teacher reply; reply clears it. Not a chat product.
 - Minimal teacher UI in `apps/web` (Papan Pagi panel: 4 sections in order + attendance capture using the class roster returned by Papan Pagi).
 - Validation: 62 tests pass (17 tenant + 25 onboarding + 20 daily-loop); `pnpm typecheck` clean; `apps/web` builds. (Includes Architect PR #3 fix: `schoolTimezone` validated before save.)
+- Architect accepted Sprint 004 after PR #3 merge. Re-review verified branch ancestry, timezone validation fix, 62 API tests, typecheck, and web build.
+
+## Sprint 005 Handoff Notes (Architect)
+
+- Detailed Sprint 005 requirements, blueprint, acceptance criteria, handoff prompt, and Claude start prompt.
+- Sprint 005 scope is the parent trust loop: linked child list/switching, Beranda Anak aggregate, attendance visibility/history, in-app notification center/read state, parent message thread list/detail/send, and mobile-first parent validation UI.
+- Parent access must come only from `parent_student_links` and the caller's memberships. No route may trust client-supplied `school_id`.
+- Sprint 005 explicitly defers grades/raport, student notes, payments, parent premium, assignments, materials, forum/social features, native/browser push delivery, full chat polish, and Sprint 006 work.
 
 ## Next Actions
 
-- Architect reviews Sprint 004 output against `planning/sprints/004-guru-daily-loop/acceptance.md`.
-- On acceptance, detail Sprint 005 Parent Trust Loop.
+- Ian may move to Claude for Sprint 005 Builder planning using `planning/sprints/005-parent-trust-loop/claude-start-prompt.md`.
+- Builder must produce the Sprint 005 pre-edit implementation plan before coding.
+- If Builder changes product scope, parent access rules, tenant isolation, notification rules, or message rules, return to Architect before implementation.
 - Optional follow-up: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` to exercise the full Better Auth HTTP flow end-to-end.
 
 ## Blockers
