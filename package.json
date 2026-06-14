@@ -1,0 +1,21 @@
+{
+  "name": "soka-baru",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  },
+  "scripts": {
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @soka/api test",
+    "dev:api": "pnpm --filter @soka/api dev",
+    "dev:web": "pnpm --filter @soka/web dev",
+    "db:generate": "pnpm --filter @soka/db generate",
+    "db:migrate": "pnpm --filter @soka/db migrate",
+    "db:seed": "pnpm --filter @soka/db seed"
+  }
+}
