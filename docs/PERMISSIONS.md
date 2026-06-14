@@ -90,7 +90,11 @@ Implemented:
 - Parent link redemption (`POST /parent-links/redeem`) is a server-controlled
   binding path: the school and student come from the code row, and it grants
   `orang_tua` legitimately because the school issued the code. This is the safe
-  alternative to public self-binding for the `orang_tua` role.
+  alternative to public self-binding for the `orang_tua` role. Redemption is
+  atomically single-use: it runs in a transaction and claims the code with a
+  conditional `active -> used` update, so concurrent redeems cannot double-link.
+- School creation (`POST /admin/schools`) plus admin binding are transactional;
+  an invalid `adminUserId` aborts before any school row is created.
 - Parent-child access (`GET /me/children`) is derived only from
   `parent_student_links` of the parent's own memberships.
 - Tests: `apps/api/src/__tests__/onboarding.test.ts` proves cross-school

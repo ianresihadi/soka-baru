@@ -1,7 +1,6 @@
 import { Hono, type Context, type Next } from "hono";
 import { cors } from "hono/cors";
 import {
-  assignSchoolAdmin,
   assignStudentToClass,
   assignTeacherToClass,
   bindUserToSchoolByCode,
@@ -181,13 +180,16 @@ export function createApp(deps: AppDeps) {
     async (c) => {
       const parsed = createSchoolSchema.safeParse(await readJson(c));
       if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      // School creation + admin binding happen in one transaction; an invalid
+      // adminUserId aborts before any school row is created.
       const result = await createSchool(deps.db, {
         name: parsed.data.name,
         schoolCode: parsed.data.schoolCode,
+        adminUserId: parsed.data.adminUserId,
       });
-      if (!result.ok) return c.json({ error: result.reason }, 409);
-      if (parsed.data.adminUserId) {
-        await assignSchoolAdmin(deps.db, result.school.id, parsed.data.adminUserId);
+      if (!result.ok) {
+        const status = result.reason === "admin_user_not_found" ? 404 : 409;
+        return c.json({ error: result.reason }, status);
       }
       return c.json(result, 201);
     },

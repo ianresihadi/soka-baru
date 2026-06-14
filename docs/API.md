@@ -82,6 +82,12 @@ belong to the caller's tenant before use.
 | `GET /me/children` | session only | List the parent's linked children. |
 
 Only `soka_internal` may create schools (avoids the chicken-and-egg of needing
-a school admin before the school exists). Teacher *accounts/memberships* are
-created via internal/seed binding; Sprint 003 only assigns existing teacher
-memberships to classes.
+a school admin before the school exists). School creation and admin binding run
+in a single transaction: an invalid `adminUserId` aborts the whole operation
+(`404 admin_user_not_found`) so no orphan school is created. Teacher
+*accounts/memberships* are created via internal/seed binding; Sprint 003 only
+assigns existing teacher memberships to classes.
+
+Parent link-code redemption is atomically single-use: the code is claimed with a
+conditional `active -> used` update inside a transaction, so under concurrent
+redeems exactly one succeeds and the rest get `400 code_used`.

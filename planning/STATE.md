@@ -121,9 +121,11 @@ Builder Layer: Sprint 003 Admin Onboarding Minimal implemented and validated. Pe
 - Added onboarding service layer `packages/db/src/onboarding.ts` with tenant-ownership checks before trusting any client-supplied foreign key.
 - Added admin onboarding API routes (`/admin/*`) and parent routes (`/parent-links/redeem`, `/me/children`).
 - School creation restricted to `soka_internal`; other onboarding requires `admin_sekolah`/`soka_internal`, scoped to the caller's school.
-- Parent link codes: single-use, default 14-day expiry, Crockford Base32, lazy expiry check; redemption is a server-controlled path that grants `orang_tua` and creates the parent-student link.
+- Parent link codes: single-use, default 14-day expiry, Crockford Base32, lazy expiry check; redemption is a server-controlled path that grants `orang_tua` and creates the parent-student link. Redemption is atomically single-use (transaction + conditional `active -> used` claim) so concurrent redeems cannot double-link.
+- School creation + admin binding run in one transaction; an invalid `adminUserId` aborts before any school is created (`404 admin_user_not_found`).
 - Lightweight audit via `audit_events` for parent-link-code and parent-link create events.
-- Validation: 39 tests pass (17 tenant + 22 onboarding); `pnpm typecheck` clean; `apps/web` builds.
+- Validation: 42 tests pass (17 tenant + 25 onboarding); `pnpm typecheck` clean; `apps/web` builds.
+- Architect review fixes applied: branch rebased on latest main preserving Architect Sprint 003 handoff docs; atomic single-use redemption; transactional safe school creation.
 
 ## Next Actions
 

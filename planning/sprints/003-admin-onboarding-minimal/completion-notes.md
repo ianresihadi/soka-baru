@@ -38,14 +38,22 @@ verifies the row belongs to `ctx.schoolId` before acting.
 ## Parent link code lifecycle
 
 Single-use, default 14-day expiry (override per request), Crockford Base32
-(8 chars), unique with retry. Redeem checks `active` + not expired; on success
-ensures parent membership + `orang_tua` role, creates the link, marks code
-`used`, writes an audit event. Expiry is checked lazily (no cron). Revoke sets
-`status=revoked`.
+(8 chars), unique with retry. Redeem runs in a transaction and atomically claims
+the code with a conditional `active -> used` update, so concurrent redeems yield
+exactly one winner (the rest get `code_used`). On success it ensures parent
+membership + `orang_tua` role, creates the link, and writes an audit event.
+Expiry is checked lazily (no cron). Revoke sets `status=revoked`.
+
+## Transactional safety (Architect review fixes)
+
+- `redeemParentLinkCode` is truly single-use under concurrency (transaction +
+  conditional claim).
+- `createSchool` wraps school creation + admin binding in one transaction and
+  validates `adminUserId` first, so a bad admin id never leaves an orphan school.
 
 ## Validation
 
-- `pnpm test` → 39 tests pass (17 `tenant.test.ts` + 22 `onboarding.test.ts`),
+- `pnpm test` → 42 tests pass (17 `tenant.test.ts` + 25 `onboarding.test.ts`),
   in-process PGlite + real migrations.
 - `pnpm typecheck` → clean across all packages.
 - `apps/web` builds.

@@ -13,6 +13,7 @@ import {
   schools,
   students,
   teacherAssignments,
+  user,
 } from "./schema";
 
 const DEFAULT_LINK_CODE_TTL_DAYS = 14;
@@ -54,23 +55,56 @@ export async function recordAuditEvent(db: Database, e: AuditEventInput) {
 // ---------------------------------------------------------------------------
 
 export type CreateSchoolResult =
-  | { ok: true; school: typeof schools.$inferSelect }
-  | { ok: false; reason: "school_code_taken" };
+  | { ok: true; school: typeof schools.$inferSelect; membershipId?: string }
+  | { ok: false; reason: "school_code_taken" | "admin_user_not_found" };
 
+/**
+ * Create a school and (optionally) bind an admin in a single transaction.
+ *
+ * If `adminUserId` is provided but does not exist, NO school is created — the
+ * transaction validates the user first and aborts, so a bad adminUserId can
+ * never leave an orphan school behind.
+ */
 export async function createSchool(
   db: Database,
-  input: { name: string; schoolCode: string },
+  input: { name: string; schoolCode: string; adminUserId?: string },
 ): Promise<CreateSchoolResult> {
-  const existing = await db
-    .select()
-    .from(schools)
-    .where(eq(schools.schoolCode, input.schoolCode));
-  if (existing[0]) return { ok: false, reason: "school_code_taken" };
-  const inserted = await db
-    .insert(schools)
-    .values({ name: input.name, schoolCode: input.schoolCode })
-    .returning();
-  return { ok: true, school: inserted[0]! };
+  return db.transaction(async (tx) => {
+    const existing = await tx
+      .select()
+      .from(schools)
+      .where(eq(schools.schoolCode, input.schoolCode));
+    if (existing[0]) return { ok: false, reason: "school_code_taken" };
+
+    if (input.adminUserId) {
+      const found = await tx
+        .select({ id: user.id })
+        .from(user)
+        .where(eq(user.id, input.adminUserId));
+      if (!found[0]) return { ok: false, reason: "admin_user_not_found" };
+    }
+
+    const inserted = await tx
+      .insert(schools)
+      .values({ name: input.name, schoolCode: input.schoolCode })
+      .returning();
+    const school = inserted[0]!;
+
+    let membershipId: string | undefined;
+    if (input.adminUserId) {
+      const m = await tx
+        .insert(schoolMemberships)
+        .values({ schoolId: school.id, userId: input.adminUserId })
+        .returning();
+      membershipId = m[0]!.id;
+      await tx
+        .insert(membershipRoles)
+        .values({ membershipId, role: "admin_sekolah" })
+        .onConflictDoNothing();
+    }
+
+    return { ok: true, school, membershipId };
+  });
 }
 
 /** Bind a user as admin_sekolah of a school (idempotent). */
@@ -316,71 +350,84 @@ export async function redeemParentLinkCode(
   code: string,
   relationship?: string,
 ): Promise<RedeemResult> {
-  const rows = await db
-    .select()
-    .from(parentLinkCodes)
-    .where(eq(parentLinkCodes.code, code));
-  const lc = rows[0];
-  if (!lc) return { ok: false, reason: "code_not_found" };
-  if (lc.status === "used") return { ok: false, reason: "code_used" };
-  if (lc.status === "revoked") return { ok: false, reason: "code_revoked" };
-  if (lc.expiresAt.getTime() <= Date.now())
-    return { ok: false, reason: "code_expired" };
+  return db.transaction(async (tx) => {
+    const rows = await tx
+      .select()
+      .from(parentLinkCodes)
+      .where(eq(parentLinkCodes.code, code));
+    const lc = rows[0];
+    if (!lc) return { ok: false, reason: "code_not_found" };
+    if (lc.status === "revoked") return { ok: false, reason: "code_revoked" };
+    if (lc.status === "used") return { ok: false, reason: "code_used" };
+    if (lc.expiresAt.getTime() <= Date.now())
+      return { ok: false, reason: "code_expired" };
 
-  // Ensure the parent has a membership in the code's school.
-  const existing = await db
-    .select()
-    .from(schoolMemberships)
-    .where(
-      and(
-        eq(schoolMemberships.userId, userId),
-        eq(schoolMemberships.schoolId, lc.schoolId),
-      ),
-    );
-  let membershipId = existing[0]?.id;
-  if (!membershipId) {
-    const inserted = await db
-      .insert(schoolMemberships)
-      .values({ schoolId: lc.schoolId, userId })
+    // Atomically claim the code: transition active -> used only if it is still
+    // active. Under concurrent redeems, the row lock means exactly one caller's
+    // UPDATE matches; the loser sees 0 rows and is rejected as code_used. This
+    // makes redemption truly single-use even with simultaneous requests.
+    const claimed = await tx
+      .update(parentLinkCodes)
+      .set({ status: "used", redeemedByUserId: userId, redeemedAt: new Date() })
+      .where(
+        and(
+          eq(parentLinkCodes.id, lc.id),
+          eq(parentLinkCodes.status, "active"),
+        ),
+      )
       .returning();
-    membershipId = inserted[0]!.id;
-  }
+    if (!claimed[0]) return { ok: false, reason: "code_used" };
 
-  await db
-    .insert(membershipRoles)
-    .values({ membershipId, role: "orang_tua" })
-    .onConflictDoNothing();
+    // Ensure the parent has a membership in the code's school.
+    const existing = await tx
+      .select()
+      .from(schoolMemberships)
+      .where(
+        and(
+          eq(schoolMemberships.userId, userId),
+          eq(schoolMemberships.schoolId, lc.schoolId),
+        ),
+      );
+    let membershipId = existing[0]?.id;
+    if (!membershipId) {
+      const inserted = await tx
+        .insert(schoolMemberships)
+        .values({ schoolId: lc.schoolId, userId })
+        .returning();
+      membershipId = inserted[0]!.id;
+    }
 
-  await db
-    .insert(parentStudentLinks)
-    .values({
+    await tx
+      .insert(membershipRoles)
+      .values({ membershipId, role: "orang_tua" })
+      .onConflictDoNothing();
+
+    await tx
+      .insert(parentStudentLinks)
+      .values({
+        schoolId: lc.schoolId,
+        studentId: lc.studentId,
+        parentMembershipId: membershipId,
+        relationship: relationship ?? null,
+      })
+      .onConflictDoNothing();
+
+    await tx.insert(auditEvents).values({
+      schoolId: lc.schoolId,
+      actorUserId: userId,
+      action: "parent_student_link.created",
+      entityType: "parent_student_link",
+      entityId: lc.studentId,
+      metadata: { via: "link_code", codeId: lc.id },
+    });
+
+    return {
+      ok: true,
       schoolId: lc.schoolId,
       studentId: lc.studentId,
-      parentMembershipId: membershipId,
-      relationship: relationship ?? null,
-    })
-    .onConflictDoNothing();
-
-  await db
-    .update(parentLinkCodes)
-    .set({ status: "used", redeemedByUserId: userId, redeemedAt: new Date() })
-    .where(eq(parentLinkCodes.id, lc.id));
-
-  await recordAuditEvent(db, {
-    schoolId: lc.schoolId,
-    actorUserId: userId,
-    action: "parent_student_link.created",
-    entityType: "parent_student_link",
-    entityId: lc.studentId,
-    metadata: { via: "link_code", codeId: lc.id },
+      membershipId,
+    };
   });
-
-  return {
-    ok: true,
-    schoolId: lc.schoolId,
-    studentId: lc.studentId,
-    membershipId,
-  };
 }
 
 /** List the students linked to a parent user, across their memberships. */

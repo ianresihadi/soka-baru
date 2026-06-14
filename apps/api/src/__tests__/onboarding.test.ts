@@ -3,6 +3,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { migrate } from "drizzle-orm/pglite/migrator";
 import { beforeAll, describe, expect, it } from "vitest";
+import { and, eq } from "drizzle-orm";
 import {
   bindUserToSchoolByCode,
   schema,
@@ -110,6 +111,22 @@ describe("school creation (soka_internal only)", () => {
     asUser(u.adminA);
     const res = await postJson("/admin/schools", { name: "X", schoolCode: "S-X" });
     expect(res.status).toBe(403);
+  });
+
+  it("does not create a school when adminUserId is invalid", async () => {
+    asUser(u.internal);
+    const res = await postJson("/admin/schools", {
+      name: "Ghost",
+      schoolCode: "S-GHOST",
+      adminUserId: "does-not-exist",
+    });
+    expect(res.status).toBe(404);
+    // The transaction aborted: no orphan school row was left behind.
+    const rows = await db
+      .select()
+      .from(schema.schools)
+      .where(eq(schema.schools.schoolCode, "S-GHOST"));
+    expect(rows).toHaveLength(0);
   });
 });
 
@@ -315,6 +332,66 @@ describe("admin role guard", () => {
     asUser(u.parent); // became orang_tua in School A after redeeming
     const res = await postJson("/admin/classes", { name: "Nope" });
     expect(res.status).toBe(403);
+  });
+});
+
+describe("redemption is single-use under concurrency", () => {
+  it("only one of two concurrent conditional claims wins", async () => {
+    // The single-use guarantee rests on a conditional UPDATE that flips
+    // active -> used only while the code is still active. Two concurrent claims
+    // on the same row must yield exactly one winner (the other matches 0 rows).
+    await db.insert(schema.parentLinkCodes).values({
+      schoolId: ctxIds.schoolA,
+      studentId: ctxIds.studentA,
+      code: "RACE0001",
+      expiresAt: new Date(Date.now() + 60_000),
+      createdByUserId: u.adminA,
+    });
+    const claim = () =>
+      db
+        .update(schema.parentLinkCodes)
+        .set({ status: "used", redeemedAt: new Date() })
+        .where(
+          and(
+            eq(schema.parentLinkCodes.code, "RACE0001"),
+            eq(schema.parentLinkCodes.status, "active"),
+          ),
+        )
+        .returning();
+    const [a, b] = await Promise.all([claim(), claim()]);
+    const winners = [a, b].filter((r) => r.length === 1);
+    expect(winners).toHaveLength(1);
+  });
+
+  it("two concurrent redeems create exactly one link", async () => {
+    asUser(u.adminA);
+    const stu = await postJson("/admin/students", { fullName: "Eka" });
+    const studentId = ((await stu.json()) as { student: { id: string } }).student.id;
+    const gen = await postJson("/admin/parent-link-codes", { studentId });
+    const code = ((await gen.json()) as { code: { code: string } }).code.code;
+
+    await db.insert(schema.user).values([
+      { id: "u-parent-x", name: "PX", email: "px@example.com" },
+      { id: "u-parent-y", name: "PY", email: "py@example.com" },
+    ]);
+    const appX = createApp({ db, resolveUserId: async () => "u-parent-x" });
+    const appY = createApp({ db, resolveUserId: async () => "u-parent-y" });
+    const init = {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code }),
+    };
+    const [rx, ry] = await Promise.all([
+      appX.request("/parent-links/redeem", init),
+      appY.request("/parent-links/redeem", init),
+    ]);
+    expect([rx.status, ry.status].sort()).toEqual([201, 400]);
+
+    const links = await db
+      .select()
+      .from(schema.parentStudentLinks)
+      .where(eq(schema.parentStudentLinks.studentId, studentId));
+    expect(links).toHaveLength(1);
   });
 });
 
