@@ -157,6 +157,26 @@ Daily-loop tables (migration `0002_*.sql`), all school-owned:
 Change to existing `students`: added `objective_status` (`aman`/`perhatian`/
 `kritis`, default `aman`), separate from the lifecycle `status` field.
 
+## Implemented In Sprint 006
+
+Academic/notes tables (migration `0003_*.sql`), all school-owned:
+
+| Table | Key fields | Notes |
+|---|---|---|
+| `grades` | `id`, `school_id`, `class_id?`, `student_id`, `subject`, `assessment_name`, `assessment_date` (`date`), `score` (int), `max_score` (int, default 100), `kkm` (int), `visibility_status` (`draft`/`published`, default `draft`), `published_at?`, `recorded_by_membership_id` | KKM stored per record. `isBelowKkm` is computed in DTOs as `(score/maxScore)*100 < kkm` (percentage, not raw). Indexed by class/date, student/date, student/visibility. |
+| `student_notes` | `id`, `school_id`, `class_id?`, `student_id`, `author_membership_id`, `category` (`general`/`academic`/`attendance`/`wellbeing`), `body`, `visibility_status` (`internal`/`published`, default `internal`), `published_at?` | Qualitative only; never mutates `students.objective_status`. Indexed by student/created, student/visibility, class/created. |
+
+Change to `school_settings`: added `default_kkm` (int, default 75) — applied only
+when a grade omits its own KKM; the resolved KKM is stored on the grade.
+
+Audit (`audit_events`): `grade.updated` (update after publish), and
+`student_note.published` / `student_note.unpublished` / `student_note.updated`
+(published-content change). Notifications reuse the `notifications` table with
+types `grade_published` and `note_published`, deduped per recipient + entity id.
+
+No tables for raport, averages, ranking, formulas, behavior scoring, or
+case-management were added.
+
 ## Parent-Student Linking
 
 Session 5 confirms parent-student links are created through school-controlled invitations or link codes.

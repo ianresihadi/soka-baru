@@ -143,4 +143,30 @@ Beranda Anak returns selected child, child list (switcher), today's attendance
 (or neutral null), a simple non-scoring `reassurance` (`headline`,
 `needsAction`, `reasons`), latest notification, latest message thread, and
 recent attendance. There is no parent attendance write path. In-app only; no
-push. Grades/notes are not implemented (deferred to Sprint 006).
+push.
+
+## Implemented In Sprint 006 (Nilai & Catatan)
+
+Teacher/admin routes require session + membership + a teacher/admin role and
+class access via `teacher_assignments` (admins school-wide). Parent routes are
+session-only and published-only.
+
+| Route | Auth | Purpose |
+|---|---|---|
+| `GET /guru/classes/:classId/grades?studentId&subject&visibility&limit` | teacher/admin | List grades for an allowed class. |
+| `POST /guru/classes/:classId/grades` | teacher/admin | Create a draft grade (KKM defaults from `school_settings.default_kkm`). |
+| `PATCH /guru/grades/:gradeId` | teacher/admin | Update grade; an update after publish writes a `grade.updated` audit. |
+| `POST /guru/grades/:gradeId/publish` | teacher/admin | Publish to linked parents (idempotent; notifies once). |
+| `GET /guru/classes/:classId/student-notes?studentId&visibility&limit` | teacher/admin | List notes for an allowed class. |
+| `POST /guru/classes/:classId/student-notes` | teacher/admin | Create an internal note. |
+| `PATCH /guru/student-notes/:noteId` | teacher/admin | Update note; published-content change writes `student_note.updated` audit. |
+| `POST /guru/student-notes/:noteId/publish` | teacher/admin | Publish/share (idempotent; notifies; audits). |
+| `POST /guru/student-notes/:noteId/unpublish` | teacher/admin | Return to internal (audits; keeps historical notifications). |
+| `GET /parent/grades?studentId&limit` | session | Published grades for a linked child (`isBelowKkm` per record). |
+| `GET /parent/grades/summary?studentId` | session | `{ total, belowKkm }` over published grades. |
+| `GET /parent/student-notes?studentId&limit` | session | Published notes for a linked child. |
+
+`isBelowKkm` is computed as `(score / maxScore) * 100 < kkm` (percentage),
+correct when `maxScore != 100`. Draft grades and internal notes are never
+returned by parent routes. Post-publish grade updates are audited but do NOT
+emit a new parent notification. In-app only; no push.

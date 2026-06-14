@@ -5,3 +5,4 @@ export * from "./repositories";
 export * from "./onboarding";
 export * from "./dailyLoop";
 export * from "./parentTrust";
+export * from "./academicRecords";

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { AttendanceStatus } from "@soka/shared";
+import { TeacherGradesNotes } from "./TeacherGradesNotes";
 
 const STATUSES: AttendanceStatus[] = [
   "hadir",
@@ -219,6 +220,8 @@ export function PapanPagi() {
             </button>
             {msg && <span className="ml-2 text-xs text-gray-600">{msg}</span>}
           </div>
+
+          <TeacherGradesNotes classId={classId} roster={data.roster} />
         </div>
       )}
     </section>

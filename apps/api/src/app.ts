@@ -10,6 +10,18 @@ import {
   createStudent,
   createStudents,
   createParentMessage,
+  createGrade,
+  updateGrade,
+  publishGrade,
+  listGradesForTeacher,
+  listPublishedGradesForParent,
+  getParentGradeSummary,
+  createStudentNote,
+  updateStudentNote,
+  publishStudentNote,
+  unpublishStudentNote,
+  listStudentNotesForTeacher,
+  listPublishedStudentNotesForParent,
   getParentAttendanceHistory,
   getParentHome,
   getParentMessageThread,
@@ -55,6 +67,14 @@ import {
   parentNotificationsQuerySchema,
   parentThreadsQuerySchema,
   markNotificationsReadSchema,
+  createGradeSchema,
+  updateGradeSchema,
+  gradeListQuerySchema,
+  parentGradesQuerySchema,
+  createStudentNoteSchema,
+  updateStudentNoteSchema,
+  studentNotesQuerySchema,
+  parentStudentNotesQuerySchema,
   redeemLinkCodeSchema,
   schoolBindingSchema,
   schoolSettingsUpdateSchema,
@@ -613,6 +633,199 @@ export function createApp(deps: AppDeps) {
     );
     if (!result.ok) return c.json({ error: result.reason }, 404);
     return c.json(result);
+  });
+
+  // --- Sprint 006: Nilai & Catatan -----------------------------------------
+
+  // Map teacher service reasons to HTTP statuses.
+  const teacherStatus = (reason: string): 403 | 404 | 422 => {
+    if (reason === "forbidden_class") return 403;
+    if (reason === "student_not_in_class") return 422;
+    return 404; // class_not_found / grade_not_found / note_not_found
+  };
+  const parentStatus = (reason: string): 403 | 404 =>
+    reason === "no_child" ? 404 : 403;
+
+  // Grades (teacher/admin)
+  app.get(
+    "/guru/classes/:classId/grades",
+    requireAuth,
+    requireMembership,
+    requireTeacher,
+    async (c) => {
+      const classId = c.req.param("classId");
+      if (!classId) return c.json({ error: "invalid_input" }, 400);
+      const parsed = gradeListQuerySchema.safeParse({
+        studentId: c.req.query("studentId"),
+        subject: c.req.query("subject"),
+        visibility: c.req.query("visibility"),
+        limit: c.req.query("limit"),
+      });
+      if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      const result = await listGradesForTeacher(deps.db, c.get("tenant"), classId, parsed.data);
+      if (!result.ok) return c.json({ error: result.reason }, teacherStatus(result.reason));
+      return c.json({ grades: result.grades });
+    },
+  );
+
+  app.post(
+    "/guru/classes/:classId/grades",
+    requireAuth,
+    requireMembership,
+    requireTeacher,
+    async (c) => {
+      const classId = c.req.param("classId");
+      if (!classId) return c.json({ error: "invalid_input" }, 400);
+      const parsed = createGradeSchema.safeParse(await readJson(c));
+      if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      const result = await createGrade(deps.db, c.get("tenant"), classId, parsed.data);
+      if (!result.ok) return c.json({ error: result.reason }, teacherStatus(result.reason));
+      return c.json({ grade: result.grade }, 201);
+    },
+  );
+
+  app.patch(
+    "/guru/grades/:gradeId",
+    requireAuth,
+    requireMembership,
+    requireTeacher,
+    async (c) => {
+      const gradeId = c.req.param("gradeId");
+      if (!gradeId) return c.json({ error: "invalid_input" }, 400);
+      const parsed = updateGradeSchema.safeParse(await readJson(c));
+      if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      const result = await updateGrade(deps.db, c.get("tenant"), gradeId, parsed.data);
+      if (!result.ok) return c.json({ error: result.reason }, teacherStatus(result.reason));
+      return c.json({ grade: result.grade });
+    },
+  );
+
+  app.post(
+    "/guru/grades/:gradeId/publish",
+    requireAuth,
+    requireMembership,
+    requireTeacher,
+    async (c) => {
+      const gradeId = c.req.param("gradeId");
+      if (!gradeId) return c.json({ error: "invalid_input" }, 400);
+      const result = await publishGrade(deps.db, c.get("tenant"), gradeId);
+      if (!result.ok) return c.json({ error: result.reason }, teacherStatus(result.reason));
+      return c.json(result);
+    },
+  );
+
+  // Student notes (teacher/admin)
+  app.get(
+    "/guru/classes/:classId/student-notes",
+    requireAuth,
+    requireMembership,
+    requireTeacher,
+    async (c) => {
+      const classId = c.req.param("classId");
+      if (!classId) return c.json({ error: "invalid_input" }, 400);
+      const parsed = studentNotesQuerySchema.safeParse({
+        studentId: c.req.query("studentId"),
+        visibility: c.req.query("visibility"),
+        limit: c.req.query("limit"),
+      });
+      if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      const result = await listStudentNotesForTeacher(deps.db, c.get("tenant"), classId, parsed.data);
+      if (!result.ok) return c.json({ error: result.reason }, teacherStatus(result.reason));
+      return c.json({ notes: result.notes });
+    },
+  );
+
+  app.post(
+    "/guru/classes/:classId/student-notes",
+    requireAuth,
+    requireMembership,
+    requireTeacher,
+    async (c) => {
+      const classId = c.req.param("classId");
+      if (!classId) return c.json({ error: "invalid_input" }, 400);
+      const parsed = createStudentNoteSchema.safeParse(await readJson(c));
+      if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      const result = await createStudentNote(deps.db, c.get("tenant"), classId, parsed.data);
+      if (!result.ok) return c.json({ error: result.reason }, teacherStatus(result.reason));
+      return c.json({ note: result.note }, 201);
+    },
+  );
+
+  app.patch(
+    "/guru/student-notes/:noteId",
+    requireAuth,
+    requireMembership,
+    requireTeacher,
+    async (c) => {
+      const noteId = c.req.param("noteId");
+      if (!noteId) return c.json({ error: "invalid_input" }, 400);
+      const parsed = updateStudentNoteSchema.safeParse(await readJson(c));
+      if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      const result = await updateStudentNote(deps.db, c.get("tenant"), noteId, parsed.data);
+      if (!result.ok) return c.json({ error: result.reason }, teacherStatus(result.reason));
+      return c.json({ note: result.note });
+    },
+  );
+
+  app.post(
+    "/guru/student-notes/:noteId/publish",
+    requireAuth,
+    requireMembership,
+    requireTeacher,
+    async (c) => {
+      const noteId = c.req.param("noteId");
+      if (!noteId) return c.json({ error: "invalid_input" }, 400);
+      const result = await publishStudentNote(deps.db, c.get("tenant"), noteId);
+      if (!result.ok) return c.json({ error: result.reason }, teacherStatus(result.reason));
+      return c.json(result);
+    },
+  );
+
+  app.post(
+    "/guru/student-notes/:noteId/unpublish",
+    requireAuth,
+    requireMembership,
+    requireTeacher,
+    async (c) => {
+      const noteId = c.req.param("noteId");
+      if (!noteId) return c.json({ error: "invalid_input" }, 400);
+      const result = await unpublishStudentNote(deps.db, c.get("tenant"), noteId);
+      if (!result.ok) return c.json({ error: result.reason }, teacherStatus(result.reason));
+      return c.json(result);
+    },
+  );
+
+  // Parent grade/note views (session only; published-only)
+  app.get("/parent/grades", requireAuth, async (c) => {
+    const parsed = parentGradesQuerySchema.safeParse({
+      studentId: c.req.query("studentId"),
+      limit: c.req.query("limit"),
+    });
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    const result = await listPublishedGradesForParent(deps.db, c.get("userId"), parsed.data);
+    if (!result.ok) return c.json({ error: result.reason }, parentStatus(result.reason));
+    return c.json({ studentId: result.studentId, grades: result.grades });
+  });
+
+  app.get("/parent/grades/summary", requireAuth, async (c) => {
+    const parsed = parentGradesQuerySchema.safeParse({
+      studentId: c.req.query("studentId"),
+    });
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    const result = await getParentGradeSummary(deps.db, c.get("userId"), parsed.data);
+    if (!result.ok) return c.json({ error: result.reason }, parentStatus(result.reason));
+    return c.json(result);
+  });
+
+  app.get("/parent/student-notes", requireAuth, async (c) => {
+    const parsed = parentStudentNotesQuerySchema.safeParse({
+      studentId: c.req.query("studentId"),
+      limit: c.req.query("limit"),
+    });
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    const result = await listPublishedStudentNotesForParent(deps.db, c.get("userId"), parsed.data);
+    if (!result.ok) return c.json({ error: result.reason }, parentStatus(result.reason));
+    return c.json({ studentId: result.studentId, notes: result.notes });
   });
 
   return app;

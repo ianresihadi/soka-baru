@@ -127,6 +127,24 @@ Implemented:
 - Parents have no attendance mutation path; `orang_tua` remains blocked from
   `/guru/*`.
 - Tests prove cross-school and cross-parent isolation.
+
+### Sprint 006 Nilai & Catatan Access
+
+- Grade/note writes and teacher listings require a teacher/admin role and class
+  access (`guru`/`wali_kelas` only assigned classes; `admin_sekolah`/
+  `soka_internal` school-wide). Every write verifies the student belongs to the
+  class and school: forbidden class → 403, missing → 404, student-not-in-class
+  → 422.
+- New grades are `draft`; new notes are `internal`. Parent routes return only
+  `published` grades and notes — draft grades and internal notes never leak to
+  parent endpoints, home, notifications, or UI.
+- Parents cannot create/update/publish grades or notes; `/guru/*` stays blocked
+  for `orang_tua`.
+- Parent grade/note access derives from `parent_student_links` + caller
+  memberships; no `school_id` is trusted. Cross-child/cross-school access is
+  rejected.
+- Qualitative notes never change `students.objective_status`; no behavior score,
+  points, ranking, or hidden risk is introduced.
 - Parent-child access (`GET /me/children`) is derived only from
   `parent_student_links` of the parent's own memberships.
 - Tests: `apps/api/src/__tests__/onboarding.test.ts` proves cross-school
