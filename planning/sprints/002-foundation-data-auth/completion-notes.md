@@ -40,6 +40,9 @@ Seed users + passwords are local-dev only.
   by `ctx.schoolId`. `assertSameTenant` rejects client-supplied foreign ids.
 - API middleware: `requireAuth`, `requireMembership`, `requireRole`.
 - Handlers never authorize from a client-supplied `school_id`.
+- Public `POST /school-bindings/by-code` only permits self-assigning
+  `SELF_BINDABLE_ROLES` (`orang_tua`); privileged roles are rejected with 403
+  and stay assignable only via seed/internal code (`bindUserToSchoolByCode`).
 
 ## Postgres RLS
 
@@ -49,9 +52,10 @@ place.
 
 ## Tests / validation
 
-- `pnpm test` → 12 passing tests (in-process PGlite + real Drizzle migrations)
+- `pnpm test` → 17 passing tests (in-process PGlite + real Drizzle migrations)
   covering binding, multi-role, `siswa` role value, read/write tenant scoping,
-  client-supplied foreign `school_id` rejection, and role checks.
+  client-supplied foreign `school_id` rejection, role checks, and the public
+  binding role guard (no self-assigning `admin_sekolah`/`soka_internal`/etc.).
 - `pnpm typecheck` → clean across all packages.
 - `apps/web` builds via `vite build`.
 

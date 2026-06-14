@@ -12,6 +12,7 @@ import {
 import {
   schoolBindingSchema,
   tenantCheckUpdateSchema,
+  isSelfBindableRole,
   type Role,
   type TenantContext,
 } from "@soka/shared";
@@ -91,6 +92,14 @@ export function createApp(deps: AppDeps) {
     const parsed = schoolBindingSchema.safeParse(body);
     if (!parsed.success) {
       return c.json({ error: "invalid_input", issues: parsed.error.issues }, 400);
+    }
+    // SECURITY: this is a public, session-only endpoint. A client must not be
+    // able to self-assign privileged roles just by knowing the school_code.
+    // Privileged/multi-role assignment stays in seed/internal code (which calls
+    // the repository directly) until an admin-controlled onboarding path exists.
+    const forbidden = parsed.data.roles.filter((r) => !isSelfBindableRole(r));
+    if (forbidden.length > 0) {
+      return c.json({ error: "forbidden_role", forbidden }, 403);
     }
     const result = await bindUserToSchoolByCode(
       deps.db,

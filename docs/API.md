@@ -45,7 +45,7 @@ Routes:
 | `GET|POST /api/auth/*` | Better Auth | Email/password sign-up, sign-in, session. |
 | `GET /me` | session | Returns the authenticated `userId`. |
 | `GET /me/memberships` | session | Lists the user's memberships, schools, and roles. |
-| `POST /school-bindings/by-code` | session | Binds the user to a school via `schoolCode` + roles. |
+| `POST /school-bindings/by-code` | session | Binds the user to a school via `schoolCode`. Self-assignable roles are restricted to `SELF_BINDABLE_ROLES` (`orang_tua` only); requesting any privileged role returns 403. |
 | `GET /tenant-check/school` | session + membership | Validation scaffold: returns the caller's tenant school. |
 | `POST /tenant-check/school` | session + membership + role | Validation scaffold: scoped write; ignores any client `schoolId`. |
 

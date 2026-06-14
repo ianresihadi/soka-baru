@@ -66,7 +66,18 @@ Implemented:
   safe path requires a server-resolved `TenantContext`; `assertSameTenant`
   rejects any client-supplied foreign `school_id` with `TenantViolationError`.
 - API middleware `requireAuth` / `requireMembership` / `requireRole`.
-- Automated tenant-isolation tests (`apps/api/src/__tests__/tenant.test.ts`).
+- Public binding role guard: the session-only `POST /school-bindings/by-code`
+  endpoint only allows self-assigning roles in `SELF_BINDABLE_ROLES`
+  (`orang_tua` for Sprint 002). Privileged roles (`guru`, `wali_kelas`,
+  `admin_sekolah`, `kepala_sekolah`, `soka_internal`) cannot be self-assigned by
+  a client that knows a `school_code`; they are assigned only by seed/internal
+  code calling the repository directly, until an admin-controlled onboarding
+  path exists (Sprint 003). Even `orang_tua` self-binding will be tightened to
+  invitation/link codes later.
+- Automated tenant-isolation tests (`apps/api/src/__tests__/tenant.test.ts`),
+  including tests proving a client cannot self-assign `admin_sekolah` or
+  `soka_internal` (or smuggle a privileged role in a mixed array) through the
+  public endpoint.
 
 ### Postgres RLS — Deferred (with reason)
 

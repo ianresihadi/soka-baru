@@ -107,10 +107,10 @@ Builder Layer: Sprint 002 Foundation Data/Auth implemented and validated. Pendin
 - Scaffolded a pnpm monorepo: `apps/api` (Hono), `apps/web` (React/Vite/Tailwind validation UI), `packages/db` (Drizzle), `packages/auth` (Better Auth), `packages/shared` (roles/types/zod).
 - Drizzle schema + generated migration for Better Auth tables (`user`, `session`, `account`, `verification`) and SOKA foundation tables (`schools`, `school_memberships`, `membership_roles`).
 - Better Auth email/password wired via the Drizzle adapter against the shared Neon database.
-- `school_code` binding implemented (`POST /school-bindings/by-code` + `bindUserToSchoolByCode`); `school_id` derived server-side from the school lookup, not client input.
+- `school_code` binding implemented (`POST /school-bindings/by-code` + `bindUserToSchoolByCode`); `school_id` derived server-side from the school lookup, not client input. The public endpoint only allows self-assigning non-privileged roles (`orang_tua`); privileged roles stay in seed/internal code.
 - Tenant isolation enforced in the service/query layer via `getActiveTenantContext`, tenant-aware repositories, `assertSameTenant`, and `requireAuth`/`requireMembership`/`requireRole` middleware.
 - Postgres RLS deferred with documented reason (see `docs/PERMISSIONS.md` and `planning/DECISIONS.md`).
-- Validation: 12 automated tests pass (in-process PGlite + real migrations); `pnpm typecheck` clean across all packages; `apps/web` builds.
+- Validation: 17 automated tests pass (in-process PGlite + real migrations), including proof that a client cannot self-assign privileged roles via the public binding endpoint; `pnpm typecheck` clean across all packages; `apps/web` builds.
 - Seed script for School A, School B, and a multi-role user (local-dev credentials only).
 
 ## Next Actions

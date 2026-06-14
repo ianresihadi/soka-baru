@@ -26,6 +26,7 @@ const ids = {
   userB: "user-b",
   userMulti: "user-multi",
   userOrtu: "user-ortu",
+  userSelfBind: "user-selfbind",
   schoolA: "",
   schoolB: "",
 };
@@ -46,6 +47,8 @@ beforeAll(async () => {
     { id: ids.userB, name: "Guru Beta", email: "b@example.com" },
     { id: ids.userMulti, name: "Wali Ortu", email: "m@example.com" },
     { id: ids.userOrtu, name: "Ortu Only", email: "o@example.com" },
+    // Authenticated but unbound user, used to test public self-binding.
+    { id: ids.userSelfBind, name: "Self Bind", email: "sb@example.com" },
   ]);
 
   // Schools.
@@ -211,5 +214,60 @@ describe("tenant isolation (route layer)", () => {
       body: JSON.stringify({ name: "SD Soka Alpha" }),
     });
     expect(ok.status).toBe(200);
+  });
+});
+
+describe("public binding endpoint role guard", () => {
+  let currentUser: string | null = null;
+  let app: ReturnType<typeof createApp>;
+
+  beforeAll(() => {
+    app = createApp({ db, resolveUserId: async () => currentUser });
+  });
+
+  const bind = (roles: string[]) =>
+    app.request("/school-bindings/by-code", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ schoolCode: "SOKA-A", roles }),
+    });
+
+  it("rejects self-assigning admin_sekolah", async () => {
+    currentUser = ids.userSelfBind;
+    const res = await bind(["admin_sekolah"]);
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as { error: string }).error).toBe("forbidden_role");
+    // No membership was created for the rejected attempt.
+    expect(await getActiveTenantContext(db, ids.userSelfBind)).toBeNull();
+  });
+
+  it("rejects self-assigning soka_internal", async () => {
+    currentUser = ids.userSelfBind;
+    const res = await bind(["soka_internal"]);
+    expect(res.status).toBe(403);
+    expect(await getActiveTenantContext(db, ids.userSelfBind)).toBeNull();
+  });
+
+  it("rejects a mix that smuggles a privileged role (guru)", async () => {
+    currentUser = ids.userSelfBind;
+    const res = await bind(["orang_tua", "guru"]);
+    expect(res.status).toBe(403);
+    // Nothing partially applied: still no membership.
+    expect(await getActiveTenantContext(db, ids.userSelfBind)).toBeNull();
+  });
+
+  it("rejects self-assigning wali_kelas", async () => {
+    currentUser = ids.userSelfBind;
+    const res = await bind(["wali_kelas"]);
+    expect(res.status).toBe(403);
+    expect(await getActiveTenantContext(db, ids.userSelfBind)).toBeNull();
+  });
+
+  it("allows self-binding the non-privileged orang_tua role", async () => {
+    currentUser = ids.userSelfBind;
+    const res = await bind(["orang_tua"]);
+    expect(res.status).toBe(201);
+    const ctx = await getActiveTenantContext(db, ids.userSelfBind);
+    expect(ctx?.roles).toEqual(["orang_tua"]);
   });
 });
