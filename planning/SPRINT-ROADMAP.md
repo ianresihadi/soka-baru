@@ -24,8 +24,8 @@ Do not start implementation from Phase 2 modules, full TU/admin, payments, princ
 | Sprint | Artifact Status |
 |---|---|
 | 001 | Complete after final documentation sanity pass. |
-| 002 | Stack confirmed; blueprint and handoff prompt detailed; ready for Builder implementation planning. |
-| 003 | Skeleton artifacts created; detail after Sprint 002. |
+| 002 | Merged and accepted via PR #1. |
+| 003 | Requirements, blueprint, acceptance criteria, handoff prompt, and Claude start prompt detailed; ready for Builder implementation planning. |
 | 004 | Skeleton artifacts created; detail after Sprint 002-003. |
 | 005 | Skeleton artifacts created; detail after Sprint 002-004. |
 | 006 | Skeleton artifacts created; detail after Sprint 002-005. |

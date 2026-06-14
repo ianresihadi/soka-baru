@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is implemented and validated; it awaits Architect review against `acceptance.md`.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is ready for Builder implementation planning.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Builder Layer: Sprint 002 Foundation Data/Auth implemented and validated. Pending Architect acceptance review before Sprint 003 is detailed.
+Architect Layer: Sprint 003 Admin Onboarding Minimal is ready for Builder implementation planning.
 
 ## Recently Completed
 
@@ -112,13 +112,16 @@ Builder Layer: Sprint 002 Foundation Data/Auth implemented and validated. Pendin
 - Postgres RLS deferred with documented reason (see `docs/PERMISSIONS.md` and `planning/DECISIONS.md`).
 - Validation: 17 automated tests pass (in-process PGlite + real migrations), including proof that a client cannot self-assign privileged roles via the public binding endpoint; `pnpm typecheck` clean across all packages; `apps/web` builds.
 - Seed script for School A, School B, and a multi-role user (local-dev credentials only).
+- Architect accepted Sprint 002 after PR #1 merge. Re-review verified `pnpm@10.33.0 install --frozen-lockfile`, API tests passing 17/17, typecheck clean, and web build successful.
+- Detailed Sprint 003 requirements, blueprint, acceptance criteria, handoff prompt, and Claude start prompt.
 
 ## Next Actions
 
-- Architect reviews Sprint 002 output against `planning/sprints/002-foundation-data-auth/acceptance.md`.
-- On acceptance, detail Sprint 003 Admin Onboarding Minimal (turn this foundation into real onboarding workflows: create school, import students, parent link codes, class/teacher assignment).
-- Optional follow-up: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` to exercise the full Better Auth HTTP flow end-to-end.
+- Move to Claude for Sprint 003 Builder planning.
+- Have Claude produce the pre-edit implementation plan only using `planning/sprints/003-admin-onboarding-minimal/claude-start-prompt.md`.
+- Approve the plan directly or bring it back to Architect for review before Claude edits files.
+- Optional follow-up remains: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` to exercise the full Better Auth HTTP flow end-to-end.
 
 ## Blockers
 
-- None blocking. Note: the full Better Auth HTTP sign-in/session flow was not exercised against a live Postgres in this environment (no `DATABASE_URL`); the tenant/auth-membership logic is covered by in-process tests, and the live path is documented for verification.
+- None blocking. Note: the full Better Auth HTTP sign-in/session flow has not yet been exercised against a live Neon/Postgres environment; the tenant/auth-membership logic is covered by in-process tests, and the live path is documented for verification.
