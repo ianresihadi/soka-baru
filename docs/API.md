@@ -167,6 +167,9 @@ session-only and published-only.
 | `GET /parent/student-notes?studentId&limit` | session | Published notes for a linked child. |
 
 `isBelowKkm` is computed as `(score / maxScore) * 100 < kkm` (percentage),
-correct when `maxScore != 100`. Draft grades and internal notes are never
-returned by parent routes. Post-publish grade updates are audited but do NOT
-emit a new parent notification. In-app only; no push.
+correct when `maxScore != 100`. Grade create/update reject `score > maxScore`
+(422). Publish uses a conditional claim (`draft -> published` /
+`internal -> published`) so concurrent publishes notify/audit exactly once.
+Draft grades and internal notes are never returned by parent routes. Post-publish
+grade updates are audited but do NOT emit a new parent notification. In-app only;
+no push.

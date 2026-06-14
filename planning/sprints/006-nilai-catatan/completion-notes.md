@@ -54,10 +54,21 @@ stored per grade; `school_settings.default_kkm` supplies it only when omitted.
 - Parent: published grades (with below-KKM indicator) and published notes cards
   in `ParentHome`, reassurance-first.
 
+## Architect review fixes (PR #5)
+
+- Grade `score` cannot exceed `maxScore`: `createGrade` rejects after applying the
+  default maxScore; `updateGrade` rejects the merged state (patching only score
+  or only maxScore). Returns `score_exceeds_max` → 422. Tests added.
+- Publish is concurrency-safe: `publishGrade`/`publishStudentNote` use a
+  conditional claim inside the transaction (`draft`/`internal -> published`), and
+  `unpublishStudentNote` claims `published -> internal`. Only the winning request
+  notifies/audits. Concurrency tests prove two simultaneous publishes notify
+  exactly once (and audit a note publish exactly once).
+
 ## Validation
 
-- `pnpm test` → 96 tests pass (17 `tenant` + 25 `onboarding` + 20 `daily-loop`
-  + 17 `parent-trust` + 17 `academic-records`), in-process PGlite + real
+- `pnpm test` → 100 tests pass (17 `tenant` + 25 `onboarding` + 20 `daily-loop`
+  + 17 `parent-trust` + 21 `academic-records`), in-process PGlite + real
   migrations.
 - `pnpm typecheck` → clean.
 - `pnpm --filter @soka/web build` → builds.

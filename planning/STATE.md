@@ -184,7 +184,7 @@ Builder Layer: Sprint 006 Nilai & Catatan implemented and validated. Pending Arc
 - Grades default `draft`, notes default `internal`; parent endpoints return published-only. Publish notifies linked parents once (idempotent); post-publish grade edits audited (`grade.updated`) without re-notifying; note publish/unpublish/published-update audited. Notes never touch `objective_status`.
 - Teacher/admin routes class-scoped (reuse `assertCanOperateClass`); parent routes session-only via `parent_student_links`. No client `school_id` trusted.
 - Minimal UI: teacher `TeacherGradesNotes` panel in Papan Pagi (grade/note entry + publish/unpublish); parent grades + published notes cards in `ParentHome`.
-- Validation: 96 tests pass (17 tenant + 25 onboarding + 20 daily-loop + 17 parent-trust + 17 academic-records); `pnpm typecheck` clean; `apps/web` builds.
+- Validation: 100 tests pass (17 tenant + 25 onboarding + 20 daily-loop + 17 parent-trust + 21 academic-records); `pnpm typecheck` clean; `apps/web` builds. (Includes Architect PR #5 fixes: score≤maxScore validation, concurrency-safe publish.)
 
 ## Next Actions
 

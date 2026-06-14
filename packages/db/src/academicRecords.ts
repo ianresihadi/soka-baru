@@ -133,7 +133,14 @@ async function notifyLinkedParents(
 
 export type CreateGradeResult =
   | { ok: true; grade: GradeDto }
-  | { ok: false; reason: "class_not_found" | "forbidden_class" | "student_not_in_class" };
+  | {
+      ok: false;
+      reason:
+        | "class_not_found"
+        | "forbidden_class"
+        | "student_not_in_class"
+        | "score_exceeds_max";
+    };
 
 export async function createGrade(
   db: Database,
@@ -149,6 +156,8 @@ export async function createGrade(
   const settings = await getOrCreateSchoolSettings(db, tenant);
   const kkm = input.kkm ?? settings.defaultKkm;
   const maxScore = input.maxScore ?? 100;
+  // score must fit within maxScore (after default is applied).
+  if (input.score > maxScore) return { ok: false, reason: "score_exceeds_max" };
 
   const inserted = await db
     .insert(grades)
@@ -170,7 +179,14 @@ export async function createGrade(
 
 export type GradeMutationResult =
   | { ok: true; grade: GradeDto }
-  | { ok: false; reason: "grade_not_found" | "forbidden_class" | "class_not_found" };
+  | {
+      ok: false;
+      reason:
+        | "grade_not_found"
+        | "forbidden_class"
+        | "class_not_found"
+        | "score_exceeds_max";
+    };
 
 export async function updateGrade(
   db: Database,
@@ -196,6 +212,9 @@ export async function updateGrade(
     maxScore: input.maxScore ?? existing.maxScore,
     kkm: input.kkm ?? existing.kkm,
   };
+  // Reject the merged state if score exceeds maxScore (either field patched).
+  if (next.score > next.maxScore)
+    return { ok: false, reason: "score_exceeds_max" };
 
   return db.transaction(async (tx) => {
     const updated = await tx
@@ -248,17 +267,25 @@ export async function publishGrade(
   const access = await canOperateClass(db, tenant, existing.classId);
   if (!access.ok) return access;
 
-  if (existing.visibilityStatus === "published") {
-    // Idempotent: no status change, no duplicate notifications.
-    return { ok: true, grade: toGradeDto(existing), notified: 0, alreadyPublished: true };
-  }
-
   return db.transaction(async (tx) => {
-    const updated = await tx
+    // Conditional claim: only the request that flips draft -> published wins.
+    // Concurrent publishes can't both notify.
+    const claimed = await tx
       .update(grades)
       .set({ visibilityStatus: "published", publishedAt: new Date(), updatedAt: new Date() })
-      .where(eq(grades.id, gradeId))
+      .where(and(eq(grades.id, gradeId), eq(grades.visibilityStatus, "draft")))
       .returning();
+
+    if (!claimed[0]) {
+      const current = await tx.select().from(grades).where(eq(grades.id, gradeId));
+      return {
+        ok: true as const,
+        grade: toGradeDto(current[0]!),
+        notified: 0,
+        alreadyPublished: true,
+      };
+    }
+
     const notified = await notifyLinkedParents(
       tx,
       tenant.schoolId,
@@ -270,7 +297,7 @@ export async function publishGrade(
       `${existing.subject} - ${existing.assessmentName}`,
       { gradeId, studentId: existing.studentId },
     );
-    return { ok: true as const, grade: toGradeDto(updated[0]!), notified, alreadyPublished: false };
+    return { ok: true as const, grade: toGradeDto(claimed[0]), notified, alreadyPublished: false };
   });
 }
 
@@ -451,16 +478,25 @@ export async function publishStudentNote(
   const access = await canOperateClass(db, tenant, existing.classId);
   if (!access.ok) return access;
 
-  if (existing.visibilityStatus === "published") {
-    return { ok: true, note: existing, notified: 0, alreadyPublished: true };
-  }
-
   return db.transaction(async (tx) => {
-    const updated = await tx
+    // Conditional claim: only the request that flips internal -> published wins,
+    // so concurrent publishes notify once and audit once.
+    const claimed = await tx
       .update(studentNotes)
       .set({ visibilityStatus: "published", publishedAt: new Date(), updatedAt: new Date() })
-      .where(eq(studentNotes.id, noteId))
+      .where(and(eq(studentNotes.id, noteId), eq(studentNotes.visibilityStatus, "internal")))
       .returning();
+
+    if (!claimed[0]) {
+      const current = await tx.select().from(studentNotes).where(eq(studentNotes.id, noteId));
+      return {
+        ok: true as const,
+        note: current[0]!,
+        notified: 0,
+        alreadyPublished: true,
+      };
+    }
+
     const notified = await notifyLinkedParents(
       tx,
       tenant.schoolId,
@@ -480,7 +516,7 @@ export async function publishStudentNote(
       entityId: noteId,
       metadata: { category: existing.category },
     });
-    return { ok: true as const, note: updated[0]!, notified, alreadyPublished: false };
+    return { ok: true as const, note: claimed[0], notified, alreadyPublished: false };
   });
 }
 
@@ -498,16 +534,20 @@ export async function unpublishStudentNote(
   const access = await canOperateClass(db, tenant, existing.classId);
   if (!access.ok) return access;
 
-  if (existing.visibilityStatus === "internal") {
-    return { ok: true, note: existing };
-  }
-
   return db.transaction(async (tx) => {
-    const updated = await tx
+    // Conditional claim: only the request that flips published -> internal wins,
+    // so concurrent unpublishes audit once.
+    const claimed = await tx
       .update(studentNotes)
       .set({ visibilityStatus: "internal", updatedAt: new Date() })
-      .where(eq(studentNotes.id, noteId))
+      .where(and(eq(studentNotes.id, noteId), eq(studentNotes.visibilityStatus, "published")))
       .returning();
+
+    if (!claimed[0]) {
+      const current = await tx.select().from(studentNotes).where(eq(studentNotes.id, noteId));
+      return { ok: true as const, note: current[0]! };
+    }
+
     await tx.insert(auditEvents).values({
       schoolId: tenant.schoolId,
       actorUserId: tenant.userId,
@@ -516,7 +556,7 @@ export async function unpublishStudentNote(
       entityId: noteId,
       metadata: {},
     });
-    return { ok: true as const, note: updated[0]! };
+    return { ok: true as const, note: claimed[0] };
   });
 }
 

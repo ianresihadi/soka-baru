@@ -640,7 +640,7 @@ export function createApp(deps: AppDeps) {
   // Map teacher service reasons to HTTP statuses.
   const teacherStatus = (reason: string): 403 | 404 | 422 => {
     if (reason === "forbidden_class") return 403;
-    if (reason === "student_not_in_class") return 422;
+    if (reason === "student_not_in_class" || reason === "score_exceeds_max") return 422;
     return 404; // class_not_found / grade_not_found / note_not_found
   };
   const parentStatus = (reason: string): 403 | 404 =>

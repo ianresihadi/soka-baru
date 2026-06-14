@@ -15,7 +15,7 @@ SOKA Baru should prove correctness through both technical tests and school-workf
 | Area | Validation Method | Status | Notes |
 |---|---|---|---|
 | Product scope | Grill decisions recorded in planning files. | In progress | Session 0 started. |
-| Role access | Permission matrix, backend tenant-isolation tests, and optional RLS tests. | Done (Sprint 002–006) | 96 automated tests across `tenant`/`onboarding`/`daily-loop`/`parent-trust`/`academic-records`. RLS deferred. |
+| Role access | Permission matrix, backend tenant-isolation tests, and optional RLS tests. | Done (Sprint 002–006) | 100 automated tests across `tenant`/`onboarding`/`daily-loop`/`parent-trust`/`academic-records`. RLS deferred. |
 | Grades | Tests for KKM, finalization, and parent visibility. | Done (Sprint 006) | `academic-records.test.ts`: draft/publish, percentage KKM, parent published-only, audit. |
 | Parent messaging | Workflow tests across staff and parent roles. | Done (Sprint 004/005) | Teacher side in `daily-loop`; parent side in `parent-trust`. |
 | Attendance | Unit/integration tests plus manual workflow check. | Done (Sprint 004) | `apps/api/src/__tests__/daily-loop.test.ts`. |
@@ -164,6 +164,10 @@ real migrations). What is proven:
 - Notes never mutate `students.objective_status`.
 - Cross-school grade creation rejected; `orang_tua` blocked from `/guru/*`;
   parent grade route returns published-only.
+- Grade create/update reject `score > maxScore` (incl. patching only score or
+  only maxScore).
+- Two concurrent grade publishes notify exactly once; two concurrent note
+  publishes notify once and audit once (conditional-claim publish).
 
-Total suite: 96 tests across `tenant` (17), `onboarding` (25), `daily-loop`
-(20), `parent-trust` (17), `academic-records` (17).
+Total suite: 100 tests across `tenant` (17), `onboarding` (25), `daily-loop`
+(20), `parent-trust` (17), `academic-records` (21).

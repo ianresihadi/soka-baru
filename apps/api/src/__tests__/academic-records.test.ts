@@ -137,6 +137,33 @@ describe("grades: create + access", () => {
     expect(res).toEqual({ ok: false, reason: "student_not_in_class" });
   });
 
+  it("rejects create when score exceeds maxScore", async () => {
+    const res = await createGrade(db, ctx.teacherA, id.classA1, {
+      studentId: id.s1, subject: "X", assessmentName: "Y", assessmentDate: "2026-06-10",
+      score: 80, maxScore: 20,
+    });
+    expect(res).toEqual({ ok: false, reason: "score_exceeds_max" });
+  });
+
+  it("rejects update when the merged score exceeds maxScore", async () => {
+    const created = await createGrade(db, ctx.teacherA, id.classA1, {
+      studentId: id.s1, subject: "Z", assessmentName: "Q", assessmentDate: "2026-06-10",
+      score: 10, maxScore: 20,
+    });
+    const gradeId = (created as { grade: { id: string } }).grade.id;
+    // patch only score -> 50 > 20
+    expect(await updateGrade(db, ctx.teacherA, gradeId, { score: 50 })).toEqual({
+      ok: false, reason: "score_exceeds_max",
+    });
+    // patch only maxScore -> existing score 10 > 5
+    expect(await updateGrade(db, ctx.teacherA, gradeId, { maxScore: 5 })).toEqual({
+      ok: false, reason: "score_exceeds_max",
+    });
+    // valid patch succeeds
+    const ok = await updateGrade(db, ctx.teacherA, gradeId, { score: 18 });
+    expect(ok.ok).toBe(true);
+  });
+
   it("computes isBelowKkm using percentage for non-100 maxScore", async () => {
     const pass = await createGrade(db, ctx.teacherA, id.classA1, {
       studentId: id.s1, subject: "B.Indo", assessmentName: "Kuis", assessmentDate: "2026-06-11",
@@ -272,6 +299,59 @@ describe("student notes: visibility + audit", () => {
     await publishStudentNote(db, ctx.teacherA, (created as { note: { id: string } }).note.id);
     const after = await db.select().from(schema.students).where(eq(schema.students.id, id.s1));
     expect(after[0]!.objectiveStatus).toBe(before[0]!.objectiveStatus);
+  });
+});
+
+describe("publish idempotency under concurrency", () => {
+  it("two concurrent grade publishes notify exactly once", async () => {
+    const created = await createGrade(db, ctx.teacherA, id.classA1, {
+      studentId: id.s1, subject: "Concurrent", assessmentName: "G", assessmentDate: "2026-06-15", score: 88,
+    });
+    const gradeId = (created as { grade: { id: string } }).grade.id;
+
+    const [a, b] = await Promise.all([
+      publishGrade(db, ctx.teacherA, gradeId),
+      publishGrade(db, ctx.teacherA, gradeId),
+    ]);
+    const totalNotified = (a.ok ? a.notified : 0) + (b.ok ? b.notified : 0);
+    expect(totalNotified).toBe(1);
+
+    const notifs = await db
+      .select()
+      .from(schema.notifications)
+      .where(
+        and(
+          eq(schema.notifications.type, "grade_published"),
+          eq(schema.notifications.studentId, id.s1),
+        ),
+      );
+    expect(notifs.filter((n) => (n.payload as { gradeId?: string })?.gradeId === gradeId)).toHaveLength(1);
+  });
+
+  it("two concurrent note publishes notify once and audit once", async () => {
+    const created = await createStudentNote(db, ctx.teacherA, id.classA1, {
+      studentId: id.s1, category: "general", body: "Concurrent note",
+    });
+    const noteId = (created as { note: { id: string } }).note.id;
+
+    const [a, b] = await Promise.all([
+      publishStudentNote(db, ctx.teacherA, noteId),
+      publishStudentNote(db, ctx.teacherA, noteId),
+    ]);
+    const totalNotified =
+      (a.ok ? a.notified ?? 0 : 0) + (b.ok ? b.notified ?? 0 : 0);
+    expect(totalNotified).toBe(1);
+
+    const pubAudits = await db
+      .select()
+      .from(schema.auditEvents)
+      .where(
+        and(
+          eq(schema.auditEvents.action, "student_note.published"),
+          eq(schema.auditEvents.entityId, noteId),
+        ),
+      );
+    expect(pubAudits).toHaveLength(1);
   });
 });
 
