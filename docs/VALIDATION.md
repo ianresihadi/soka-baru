@@ -15,7 +15,7 @@ SOKA Baru should prove correctness through both technical tests and school-workf
 | Area | Validation Method | Status | Notes |
 |---|---|---|---|
 | Product scope | Grill decisions recorded in planning files. | In progress | Session 0 started. |
-| Role access | Permission matrix, backend tenant-isolation tests, and optional RLS tests. | Done (Sprint 002/003/004/005) | 78 automated tests across `tenant`/`onboarding`/`daily-loop`/`parent-trust`. RLS deferred. |
+| Role access | Permission matrix, backend tenant-isolation tests, and optional RLS tests. | Done (Sprint 002/003/004/005) | 79 automated tests across `tenant`/`onboarding`/`daily-loop`/`parent-trust`. RLS deferred. |
 | Parent messaging | Workflow tests across staff and parent roles. | Done (Sprint 004/005) | Teacher side in `daily-loop`; parent side in `parent-trust`. |
 | Attendance | Unit/integration tests plus manual workflow check. | Done (Sprint 004) | `apps/api/src/__tests__/daily-loop.test.ts`. |
 | Onboarding | Tests for school/class/student/teacher setup and parent links across two schools. | Done (Sprint 003) | `apps/api/src/__tests__/onboarding.test.ts`. |
@@ -136,6 +136,8 @@ migrations). What is proven:
   sending for an unlinked/cross-school child is rejected.
 - `orang_tua` cannot access `/guru/*`; `/parent/home` returns 403 for an
   unlinked `studentId`; `/parent/children` works over session only.
+- `needsAction` is true when any unread notification exists for the child, even
+  if the latest notification is already read (older-unread case).
 
-Total suite: 78 tests across `tenant` (17), `onboarding` (25), `daily-loop` (20),
-`parent-trust` (16). No schema change in Sprint 005 (reused `notifications.read_at`).
+Total suite: 79 tests across `tenant` (17), `onboarding` (25), `daily-loop` (20),
+`parent-trust` (17). No schema change in Sprint 005 (reused `notifications.read_at`).

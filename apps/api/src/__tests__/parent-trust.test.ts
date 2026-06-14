@@ -148,6 +148,52 @@ describe("beranda anak", () => {
     expect(home.ok && home.today?.attendanceStatus).toBeNull();
     expect(home.ok && home.reassurance?.headline).toContain("belum tercatat");
   });
+
+  it("needsAction is true when an older notification is unread even if the latest is read", async () => {
+    await db.insert(schema.user).values({ id: "parent-c", name: "PC", email: "pc@x.com" });
+    const s3 = await createStudent(db, ctx.adminA, { fullName: "Anak Tiga", classId: id.classA1 });
+    const code = await createParentLinkCode(db, ctx.adminA, s3.id);
+    await redeemParentLinkCode(db, "parent-c", (code as { code: { code: string } }).code.code);
+    const m = await db
+      .select()
+      .from(schema.schoolMemberships)
+      .where(eq(schema.schoolMemberships.userId, "parent-c"));
+    const membershipId = m[0]!.id;
+
+    await db.insert(schema.notifications).values([
+      {
+        schoolId: s3.schoolId,
+        recipientMembershipId: membershipId,
+        studentId: s3.id,
+        type: "attendance",
+        title: "Lama",
+        body: "x",
+        payload: { date: "2026-06-10", status: "alpa" },
+        createdAt: new Date("2026-06-10T00:00:00Z"),
+        readAt: null, // older, still unread
+      },
+      {
+        schoolId: s3.schoolId,
+        recipientMembershipId: membershipId,
+        studentId: s3.id,
+        type: "attendance",
+        title: "Baru",
+        body: "y",
+        payload: { date: "2026-06-12", status: "sakit" },
+        createdAt: new Date("2026-06-12T00:00:00Z"),
+        readAt: new Date("2026-06-12T01:00:00Z"), // newer, already read
+      },
+    ]);
+
+    // s3 has no attendance today, so needsAction can only come from the unread notification.
+    const home = await getParentHome(db, "parent-c", { studentId: s3.id }, NOW);
+    expect(home.ok).toBe(true);
+    if (!home.ok) return;
+    expect(home.latestNotification?.title).toBe("Baru"); // latest is the read one
+    expect(home.latestNotification?.readAt).not.toBeNull();
+    expect(home.reassurance?.needsAction).toBe(true);
+    expect(home.reassurance?.reasons).toContain("unread_notification");
+  });
 });
 
 describe("attendance history (read-only)", () => {

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 import {
   PARENT_LIMITS,
   clampLimit,
@@ -173,6 +173,21 @@ export async function getParentHome(
     .limit(1);
   const latestNotification = latestNotifRows[0] ?? null;
 
+  // Detect ANY unread notification for this child (not just the latest one):
+  // a newer read notification must not hide an older unread one.
+  const unreadRows = await db
+    .select({ id: notifications.id })
+    .from(notifications)
+    .where(
+      and(
+        eq(notifications.recipientMembershipId, selected.parentMembershipId),
+        eq(notifications.studentId, selected.studentId),
+        isNull(notifications.readAt),
+      ),
+    )
+    .limit(1);
+  const hasUnreadNotification = unreadRows.length > 0;
+
   const threadRows = await db
     .select()
     .from(messageThreads)
@@ -208,7 +223,7 @@ export async function getParentHome(
     headline = `Anak Anda tercatat ${todayStatus} hari ini.`;
     reasons.push(`status_${todayStatus}`);
   }
-  if (latestNotification && !latestNotification.readAt) {
+  if (hasUnreadNotification) {
     reasons.push("unread_notification");
     needsAction = true;
   }

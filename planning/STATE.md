@@ -163,7 +163,7 @@ Builder Layer: Sprint 005 Parent Trust Loop implemented and validated. Pending A
 - Added parent API routes (`/parent/children|home|attendance|notifications|notifications/read|messages/threads|messages/threads/:id`); `requireAuth` only, access via `parent_student_links` + memberships; default + max list limits.
 - Beranda Anak `reassurance` is a simple non-scoring summary (`headline`, `needsAction`, `reasons`); unrecorded attendance is neutral, never treated as alpa.
 - Added mobile-first parent UI (`apps/web` Teacher|Parent tab + `ParentHome.tsx`): child switcher, Beranda summary, notifications + mark-read, attendance history, message thread/detail/send.
-- Validation: 78 tests pass (17 tenant + 25 onboarding + 20 daily-loop + 16 parent-trust); `pnpm typecheck` clean; `apps/web` builds.
+- Validation: 79 tests pass (17 tenant + 25 onboarding + 20 daily-loop + 17 parent-trust); `pnpm typecheck` clean; `apps/web` builds. (Includes Architect PR #4 fix: `needsAction` detects any unread notification, not just the latest.)
 
 ## Next Actions
 

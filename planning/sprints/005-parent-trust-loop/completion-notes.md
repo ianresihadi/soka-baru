@@ -44,10 +44,19 @@ reassurance-first cards — child switcher, Beranda Anak summary, notification
 center with mark-read, attendance history, and message thread/detail/send. No
 promoted menu entries for payment/premium/tasks/materials/grades/notes.
 
+## Architect review fixes (PR #4)
+
+- `getParentHome.needsAction` now detects ANY unread notification for the
+  selected child (separate `read_at is null` existence query scoped to the
+  parent membership + student), so a newer read notification can no longer hide
+  an older unread one. `latestNotification` still returns the latest. Test added
+  proving latest-read + older-unread still yields `needsAction: true` with
+  `unread_notification`.
+
 ## Validation
 
-- `pnpm test` → 78 tests pass (17 `tenant` + 25 `onboarding` + 20 `daily-loop`
-  + 16 `parent-trust`), in-process PGlite + real migrations.
+- `pnpm test` → 79 tests pass (17 `tenant` + 25 `onboarding` + 20 `daily-loop`
+  + 17 `parent-trust`), in-process PGlite + real migrations.
 - `pnpm typecheck` → clean.
 - `pnpm --filter @soka/web build` → builds.
 
