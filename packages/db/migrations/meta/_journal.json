@@ -15,6 +15,13 @@
       "when": 1781409735012,
       "tag": "0001_flat_dust",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781422283032,
+      "tag": "0002_eager_bug",
+      "breakpoints": true
     }
   ]
 }

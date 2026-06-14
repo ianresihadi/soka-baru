@@ -95,6 +95,22 @@ Implemented:
   conditional `active -> used` update, so concurrent redeems cannot double-link.
 - School creation (`POST /admin/schools`) plus admin binding are transactional;
   an invalid `adminUserId` aborts before any school row is created.
+
+### Sprint 004 Daily-Loop Access
+
+- `guru`/`wali_kelas` can operate only classes assigned to their membership
+  (`teacher_assignments.membership_id`). `admin_sekolah`/`soka_internal` operate
+  school-wide but remain tenant-scoped.
+- `orang_tua` cannot access `/guru/*` routes (role guard returns 403).
+- Attendance, Papan Pagi, messages, settings, and notifications are all scoped by
+  the server-resolved tenant; no route accepts `school_id` from the client.
+- Parent messaging (`POST /parent/messages`) verifies the parent's membership in
+  the student's school and a `parent_student_links` row before creating a thread.
+- Teacher replies verify the thread belongs to the tenant and the teacher can
+  operate the thread's class.
+- Notification access (`GET /me/notifications`) is limited to the caller's own
+  memberships.
+- Tests prove a School A teacher cannot operate School B classes/students.
 - Parent-child access (`GET /me/children`) is derived only from
   `parent_student_links` of the parent's own memberships.
 - Tests: `apps/api/src/__tests__/onboarding.test.ts` proves cross-school

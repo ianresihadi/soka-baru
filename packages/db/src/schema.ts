@@ -1,5 +1,6 @@
 import {
   boolean,
+  date,
   jsonb,
   pgTable,
   text,
@@ -150,6 +151,10 @@ export const students = pgTable("students", {
     onDelete: "set null",
   }),
   status: text("status").notNull().default("active"),
+  // Objective status for Papan Pagi (aman | perhatian | kritis). Separate from
+  // the lifecycle `status` field; computed from attendance/grades in a later
+  // sprint. Sprint 004 only stores/reads it.
+  objectiveStatus: text("objective_status").notNull().default("aman"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -238,5 +243,127 @@ export const auditEvents = pgTable("audit_events", {
   entityType: text("entity_type").notNull(),
   entityId: text("entity_id"),
   metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ---------------------------------------------------------------------------
+// Sprint 004 — Guru daily loop (all school-owned / tenant-scoped)
+// ---------------------------------------------------------------------------
+
+/** Per-school configurable rules. Attendance cutoff is school-local wall-clock. */
+export const schoolSettings = pgTable("school_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .unique()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  attendanceCutoffTime: text("attendance_cutoff_time").notNull().default("07:30"),
+  // IANA timezone used to interpret the cutoff as wall-clock time.
+  schoolTimezone: text("school_timezone").notNull().default("Asia/Jakarta"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/** Daily attendance fact per student per date. */
+export const attendanceRecords = pgTable(
+  "attendance_records",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    attendanceDate: date("attendance_date").notNull(), // YYYY-MM-DD
+    status: text("status").notNull(), // hadir | sakit | izin | alpa | terlambat
+    recordedByMembershipId: uuid("recorded_by_membership_id")
+      .notNull()
+      .references(() => schoolMemberships.id),
+    note: text("note"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    uniqStudentDate: uniqueIndex("uniq_student_date").on(
+      t.schoolId,
+      t.studentId,
+      t.attendanceDate,
+    ),
+  }),
+);
+
+/** Minimal parent-teacher communication thread used by Papan Pagi. */
+export const messageThreads = pgTable(
+  "message_threads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    parentMembershipId: uuid("parent_membership_id")
+      .notNull()
+      .references(() => schoolMemberships.id, { onDelete: "cascade" }),
+    classId: uuid("class_id").references(() => classes.id, {
+      onDelete: "set null",
+    }),
+    status: text("status").notNull().default("open"),
+    lastMessageAt: timestamp("last_message_at"),
+    lastParentMessageAt: timestamp("last_parent_message_at"),
+    lastTeacherReplyAt: timestamp("last_teacher_reply_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    uniqStudentParentThread: uniqueIndex("uniq_student_parent_thread").on(
+      t.studentId,
+      t.parentMembershipId,
+    ),
+  }),
+);
+
+/** Individual message entries within a thread. */
+export const messages = pgTable("messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  threadId: uuid("thread_id")
+    .notNull()
+    .references(() => messageThreads.id, { onDelete: "cascade" }),
+  studentId: uuid("student_id")
+    .notNull()
+    .references(() => students.id, { onDelete: "cascade" }),
+  senderMembershipId: uuid("sender_membership_id")
+    .notNull()
+    .references(() => schoolMemberships.id),
+  senderRole: text("sender_role").notNull(),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** In-app notification records (no push delivery in Sprint 004). */
+export const notifications = pgTable("notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  schoolId: uuid("school_id")
+    .notNull()
+    .references(() => schools.id, { onDelete: "cascade" }),
+  recipientMembershipId: uuid("recipient_membership_id")
+    .notNull()
+    .references(() => schoolMemberships.id, { onDelete: "cascade" }),
+  studentId: uuid("student_id").references(() => students.id, {
+    onDelete: "set null",
+  }),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  payload: jsonb("payload"),
+  readAt: timestamp("read_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

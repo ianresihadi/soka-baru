@@ -9,30 +9,45 @@ import {
   createSchool,
   createStudent,
   createStudents,
+  createParentMessage,
   getActiveTenantContext,
+  getOrCreateSchoolSettings,
+  getPapanPagi,
   getSchoolForTenant,
   listChildrenForParent,
   listClasses,
   listMembershipsForTenant,
+  listNotificationsForUser,
   listParentLinkCodes,
   listStudents,
+  listTeacherClasses,
+  listUnrepliedParentThreads,
   listUserMemberships,
   redeemParentLinkCode,
+  replyToParentThread,
   revokeParentLinkCode,
+  submitClassAttendance,
   updateSchoolNameForTenant,
+  updateSchoolSettings,
   TenantViolationError,
   type Database,
 } from "@soka/db";
 import {
   assignClassSchema,
   assignTeacherSchema,
+  attendanceDateSchema,
   bulkStudentsSchema,
   createClassSchema,
   createLinkCodeSchema,
   createSchoolSchema,
   createStudentSchema,
+  papanPagiQuerySchema,
+  parentMessageSchema,
   redeemLinkCodeSchema,
   schoolBindingSchema,
+  schoolSettingsUpdateSchema,
+  submitAttendanceSchema,
+  teacherReplySchema,
   tenantCheckUpdateSchema,
   isSelfBindableRole,
   type Role,
@@ -349,6 +364,150 @@ export function createApp(deps: AppDeps) {
 
   app.get("/me/children", requireAuth, async (c) => {
     return c.json({ children: await listChildrenForParent(deps.db, c.get("userId")) });
+  });
+
+  // --- Sprint 004: Guru daily loop -----------------------------------------
+
+  const requireTeacher = requireRole(
+    "guru",
+    "wali_kelas",
+    "admin_sekolah",
+    "soka_internal",
+  );
+
+  app.get("/guru/classes", requireAuth, requireMembership, requireTeacher, async (c) => {
+    return c.json({ classes: await listTeacherClasses(deps.db, c.get("tenant")) });
+  });
+
+  app.get("/guru/settings", requireAuth, requireMembership, requireTeacher, async (c) => {
+    return c.json({ settings: await getOrCreateSchoolSettings(deps.db, c.get("tenant")) });
+  });
+
+  app.get("/guru/papan-pagi", requireAuth, requireMembership, requireTeacher, async (c) => {
+    const parsed = papanPagiQuerySchema.safeParse({
+      date: c.req.query("date"),
+      classId: c.req.query("classId"),
+    });
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    const result = await getPapanPagi(deps.db, c.get("tenant"), parsed.data);
+    if (!result.ok) {
+      const status = result.reason === "forbidden_class" ? 403 : 404;
+      return c.json({ error: result.reason }, status);
+    }
+    return c.json(result);
+  });
+
+  app.put(
+    "/guru/classes/:classId/attendance/:date",
+    requireAuth,
+    requireMembership,
+    requireTeacher,
+    async (c) => {
+      const classId = c.req.param("classId");
+      const date = c.req.param("date");
+      if (!classId || !date || !attendanceDateSchema.safeParse(date).success)
+        return c.json({ error: "invalid_input" }, 400);
+      const parsed = submitAttendanceSchema.safeParse(await readJson(c));
+      if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      const result = await submitClassAttendance(
+        deps.db,
+        c.get("tenant"),
+        classId,
+        date,
+        parsed.data,
+      );
+      if (!result.ok) {
+        const status =
+          result.reason === "forbidden_class"
+            ? 403
+            : result.reason === "correction_reason_required" ||
+                result.reason === "duplicate_student" ||
+                result.reason === "student_not_in_class"
+              ? 422
+              : 404;
+        return c.json({ error: result.reason }, status);
+      }
+      return c.json(result);
+    },
+  );
+
+  app.get(
+    "/guru/messages/unreplied",
+    requireAuth,
+    requireMembership,
+    requireTeacher,
+    async (c) => {
+      const classId = c.req.query("classId");
+      const threads = await listUnrepliedParentThreads(
+        deps.db,
+        c.get("tenant"),
+        classId,
+      );
+      return c.json({ count: threads.length, threads });
+    },
+  );
+
+  app.post(
+    "/guru/messages/:threadId/reply",
+    requireAuth,
+    requireMembership,
+    requireTeacher,
+    async (c) => {
+      const threadId = c.req.param("threadId");
+      if (!threadId) return c.json({ error: "invalid_input" }, 400);
+      const parsed = teacherReplySchema.safeParse(await readJson(c));
+      if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      const result = await replyToParentThread(
+        deps.db,
+        c.get("tenant"),
+        threadId,
+        parsed.data,
+      );
+      if (!result.ok) {
+        const status = result.reason === "forbidden_class" ? 403 : 404;
+        return c.json({ error: result.reason }, status);
+      }
+      return c.json(result, 201);
+    },
+  );
+
+  app.patch(
+    "/admin/school-settings",
+    requireAuth,
+    requireMembership,
+    requireAdmin,
+    async (c) => {
+      const parsed = schoolSettingsUpdateSchema.safeParse(await readJson(c));
+      if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+      const settings = await updateSchoolSettings(
+        deps.db,
+        c.get("tenant"),
+        parsed.data,
+      );
+      return c.json({ settings });
+    },
+  );
+
+  // Parent-support routes.
+  app.post("/parent/messages", requireAuth, async (c) => {
+    const parsed = parentMessageSchema.safeParse(await readJson(c));
+    if (!parsed.success) return c.json({ error: "invalid_input" }, 400);
+    const result = await createParentMessage(
+      deps.db,
+      c.get("userId"),
+      parsed.data,
+    );
+    if (!result.ok) {
+      const status = result.reason === "student_not_found" ? 404 : 403;
+      return c.json({ error: result.reason }, status);
+    }
+    return c.json(result, 201);
+  });
+
+  app.get("/me/notifications", requireAuth, async (c) => {
+    return c.json({
+      notifications: await listNotificationsForUser(deps.db, c.get("userId")),
+    });
   });
 
   return app;

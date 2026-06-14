@@ -91,3 +91,32 @@ assigns existing teacher memberships to classes.
 Parent link-code redemption is atomically single-use: the code is claimed with a
 conditional `active -> used` update inside a transaction, so under concurrent
 redeems exactly one succeeds and the rest get `400 code_used`.
+
+## Implemented In Sprint 004 (Guru Daily Loop)
+
+Teacher/admin routes require an authenticated session, an active membership, and
+a teacher-or-admin role; class access is verified against `teacher_assignments`
+(admins operate school-wide). `orang_tua` cannot access `/guru/*`.
+
+| Route | Required role | Purpose |
+|---|---|---|
+| `GET /guru/classes` | guru/wali_kelas/admin/internal | Classes the caller can operate. |
+| `GET /guru/settings` | guru/wali_kelas/admin/internal | School settings (cutoff, timezone). |
+| `GET /guru/papan-pagi?classId&date` | guru/wali_kelas/admin/internal | Papan Pagi summary (4 sections + roster). |
+| `PUT /guru/classes/:classId/attendance/:date` | guru/wali_kelas/admin/internal | Upsert class attendance; post-day change needs `correctionReason`. |
+| `GET /guru/messages/unreplied?classId` | guru/wali_kelas/admin/internal | Unreplied parent threads for assigned classes. |
+| `POST /guru/messages/:threadId/reply` | guru/wali_kelas/admin/internal | Reply; clears the thread from unreplied. |
+| `PATCH /admin/school-settings` | admin_sekolah/soka_internal | Update cutoff/timezone. |
+| `POST /parent/messages` | session + linked parent | Parent message about a linked child. |
+| `GET /me/notifications` | session | Notification records for the user's memberships. |
+
+Papan Pagi sections are returned in the fixed product order: (1) Status Absensi
+Hari Ini, (2) Pesan Ortu Belum Dibalas, (3) Siswa Perlu Perhatian, (4) Jadwal
+Mengajar Hari Ini. Attendance completion is `not_started`/`in_progress`/
+`completed_on_time`/`completed_late`, computed against the school-local cutoff.
+Notification records are created only for `sakit`/`izin`/`alpa`/`terlambat`
+(never `hadir`), with no push delivery in Sprint 004.
+
+`PATCH /admin/school-settings` validates `schoolTimezone` against the runtime's
+`Intl` timezone database and returns `400 invalid_input` for an unknown zone, so
+a bad value can never be saved and break Papan Pagi/attendance.

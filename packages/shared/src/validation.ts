@@ -80,3 +80,94 @@ export const redeemLinkCodeSchema = z.object({
   relationship: z.string().min(1).optional(),
 });
 export type RedeemLinkCodeInput = z.infer<typeof redeemLinkCodeSchema>;
+
+// --- Sprint 004: Guru daily loop ---------------------------------------------
+
+export const ATTENDANCE_STATUSES = [
+  "hadir",
+  "sakit",
+  "izin",
+  "alpa",
+  "terlambat",
+] as const;
+export const attendanceStatusSchema = z.enum(ATTENDANCE_STATUSES);
+export type AttendanceStatus = z.infer<typeof attendanceStatusSchema>;
+
+/** Statuses that create parent notification records (hadir excluded). */
+export const NOTIFY_ATTENDANCE_STATUSES: readonly AttendanceStatus[] = [
+  "sakit",
+  "izin",
+  "alpa",
+  "terlambat",
+];
+
+/** ISO date string YYYY-MM-DD. */
+export const attendanceDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "format tanggal harus YYYY-MM-DD");
+
+/** HH:mm 24-hour wall-clock time. */
+export const cutoffTimeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "format jam harus HH:mm");
+
+/** True when the runtime accepts the IANA timezone (rejects bad Intl input). */
+export function isValidTimeZone(tz: string): boolean {
+  if (!tz) return false;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export const timezoneSchema = z
+  .string()
+  .min(1)
+  .refine(isValidTimeZone, "timezone tidak valid");
+
+export const submitAttendanceSchema = z.object({
+  records: z
+    .array(
+      z.object({
+        studentId: z.string().uuid(),
+        status: attendanceStatusSchema,
+        note: z.string().min(1).optional(),
+      }),
+    )
+    .min(1),
+  correctionReason: z.string().min(1).optional(),
+});
+export type SubmitAttendanceInput = z.infer<typeof submitAttendanceSchema>;
+
+export const papanPagiQuerySchema = z.object({
+  date: attendanceDateSchema.optional(),
+  classId: z.string().uuid().optional(),
+});
+export type PapanPagiQuery = z.infer<typeof papanPagiQuerySchema>;
+
+export const schoolSettingsUpdateSchema = z.object({
+  attendanceCutoffTime: cutoffTimeSchema.optional(),
+  schoolTimezone: timezoneSchema.optional(),
+});
+export type SchoolSettingsUpdateInput = z.infer<
+  typeof schoolSettingsUpdateSchema
+>;
+
+export const parentMessageSchema = z.object({
+  studentId: z.string().uuid(),
+  body: z.string().min(1),
+});
+export type ParentMessageInput = z.infer<typeof parentMessageSchema>;
+
+export const teacherReplySchema = z.object({
+  body: z.string().min(1),
+});
+export type TeacherReplyInput = z.infer<typeof teacherReplySchema>;
+
+export type AttendanceCompletion =
+  | "not_started"
+  | "in_progress"
+  | "completed_on_time"
+  | "completed_late";

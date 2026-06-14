@@ -139,8 +139,23 @@ Admin onboarding tables (migration `0001_*.sql`), all school-owned:
 | `audit_events` | `id`, `school_id`, `actor_user_id?`, `action`, `entity_type`, `entity_id?`, `metadata jsonb?` | Lightweight audit; currently records parent-link-code and parent-link create events. |
 
 Decisions reflected here: student↔class is a direct `class_id` FK (not a join
-table); `school_settings` is deferred to a later sprint; `audit_events`
-implements the DOMAIN-mandated lightweight audit for trust-sensitive events.
+table); `audit_events` implements the DOMAIN-mandated lightweight audit for
+trust-sensitive events.
+
+## Implemented In Sprint 004
+
+Daily-loop tables (migration `0002_*.sql`), all school-owned:
+
+| Table | Key fields | Notes |
+|---|---|---|
+| `school_settings` | `id`, `school_id` (unique), `attendance_cutoff_time` (default `07:30`), `school_timezone` (default `Asia/Jakarta`) | Cutoff is school-local wall-clock. |
+| `attendance_records` | `id`, `school_id`, `class_id`, `student_id`, `attendance_date` (`date`), `status`, `recorded_by_membership_id`, `note?` | Unique `(school_id, student_id, attendance_date)`; statuses `hadir`/`sakit`/`izin`/`alpa`/`terlambat`. |
+| `message_threads` | `id`, `school_id`, `student_id`, `parent_membership_id`, `class_id?`, `status`, `last_message_at`, `last_parent_message_at`, `last_teacher_reply_at?` | Unique `(student_id, parent_membership_id)`. Unreplied = parent message newer than last teacher reply. |
+| `messages` | `id`, `school_id`, `thread_id`, `student_id`, `sender_membership_id`, `sender_role`, `body` | Minimal parent↔teacher messages. |
+| `notifications` | `id`, `school_id`, `recipient_membership_id`, `student_id?`, `type`, `title`, `body`, `payload` jsonb, `read_at?` | In-app only (no push); dedup by `(recipient, student, payload.date, payload.status)`. |
+
+Change to existing `students`: added `objective_status` (`aman`/`perhatian`/
+`kritis`, default `aman`), separate from the lifecycle `status` field.
 
 ## Parent-Student Linking
 
