@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is detailed and ready for Builder pre-edit implementation planning.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is implemented and validated; it awaits Architect review against `acceptance.md`.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Architect Layer: Sprint 004 Guru Daily Loop handoff is ready. Builder should start from `planning/sprints/004-guru-daily-loop/claude-start-prompt.md` and produce the required pre-edit plan before implementation.
+Builder Layer: Sprint 004 Guru Daily Loop implemented and validated. Pending Architect acceptance review before Sprint 005 (Parent Trust Loop) is detailed.
 
 ## Recently Completed
 
@@ -137,13 +137,23 @@ Architect Layer: Sprint 004 Guru Daily Loop handoff is ready. Builder should sta
 - Notification records are required for `sakit`, `izin`, `alpa`, and `terlambat`; `hadir` must not create required daily notification records.
 - Sprint 004 explicitly defers full parent PWA polish, full chat, broadcast announcements, formal message SLA, grades/raport, student notes, principal analytics, payments, LMS, and push delivery.
 
+## Sprint 004 Build Notes (Builder)
+
+- Added daily-loop tables (migration `0002_*`): `school_settings` (with `school_timezone`), `attendance_records`, `message_threads`, `messages`, `notifications`; added `students.objective_status`.
+- Added service layer `packages/db/src/dailyLoop.ts`: settings, teacher class access, attendance upsert + corrections + audit, notifications, Papan Pagi, parent messages, notification listing.
+- Attendance cutoff treated as school-local wall-clock (Architect correction): `school_timezone` default `Asia/Jakarta`; completion on-time/late computed via a timezone-aware cutoff helper with injectable `now`. No UTC hardcoded as business rule.
+- Added teacher/admin/parent API routes (`/guru/*`, `/admin/school-settings`, `/parent/messages`, `/me/notifications`); `orang_tua` blocked from `/guru/*`.
+- Notifications: created only for `sakit`/`izin`/`alpa`/`terlambat` (never `hadir`), deduped per student/date/status; in-app rows only (no push).
+- Parent-message scaffold (thread + messages), unreplied = parent message newer than last teacher reply; reply clears it. Not a chat product.
+- Minimal teacher UI in `apps/web` (Papan Pagi panel: 4 sections in order + attendance capture using the class roster returned by Papan Pagi).
+- Validation: 61 tests pass (17 tenant + 25 onboarding + 19 daily-loop); `pnpm typecheck` clean; `apps/web` builds.
+
 ## Next Actions
 
-- Ian may move to Claude for Sprint 004 Builder planning using `planning/sprints/004-guru-daily-loop/claude-start-prompt.md`.
-- Builder must produce the Sprint 004 pre-edit implementation plan before coding.
-- If Builder changes product scope, permissions, tenant isolation, correction rules, notification rules, or message rules, return to Architect before implementation.
+- Architect reviews Sprint 004 output against `planning/sprints/004-guru-daily-loop/acceptance.md`.
+- On acceptance, detail Sprint 005 Parent Trust Loop.
 - Optional follow-up: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` to exercise the full Better Auth HTTP flow end-to-end.
 
 ## Blockers
 
-- None blocking. Note: the full Better Auth HTTP sign-in/session flow was not exercised against a live Postgres in this environment (no `DATABASE_URL`); the tenant/auth-membership/onboarding logic is covered by in-process tests, and the live path is documented for verification. Teacher account/membership creation has no admin UI yet (created via internal/seed binding); Sprint 003 only assigns existing teacher memberships to classes.
+- None blocking. Note: the full Better Auth HTTP sign-in/session flow was not exercised against a live Postgres in this environment (no `DATABASE_URL`); business logic is covered by in-process tests, and the live path is documented for verification. School-timezone handling is limited to cutoff comparison; a full timezone UI is intentionally deferred. Teacher account/membership creation still has no admin UI (internal/seed binding); Sprint 004 assigns existing teacher memberships to classes only.

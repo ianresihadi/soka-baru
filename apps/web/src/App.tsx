@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { MembershipSummary } from "@soka/shared";
+import { PapanPagi } from "./PapanPagi";
 
 /**
  * Minimal Sprint 002 validation UI. Not a product screen.
@@ -108,6 +109,8 @@ export function App() {
       <pre className="mt-4 max-h-80 overflow-auto rounded bg-gray-900 p-3 text-xs text-green-300">
         {log.join("\n")}
       </pre>
+
+      <PapanPagi />
     </div>
   );
 }
