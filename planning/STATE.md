@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is detailed and ready for Builder pre-edit implementation planning.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is implemented and validated; it awaits Architect review against `acceptance.md`.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Architect Layer: Sprint 006 Nilai & Catatan handoff is ready. Next step is Builder pre-edit implementation planning in Claude before any code changes.
+Builder Layer: Sprint 006 Nilai & Catatan implemented and validated. Pending Architect acceptance review. Sprint 006 is the last sprint in the initial 001–006 roadmap.
 
 ## Recently Completed
 
@@ -176,11 +176,20 @@ Architect Layer: Sprint 006 Nilai & Catatan handoff is ready. Next step is Build
 - Qualitative notes must never mutate `students.objective_status` or create behavior points, ranking, leaderboard, or hidden risk scoring.
 - Sprint 006 explicitly defers full raport finalization, semester locking, print/export, approvals, formulas/averages/ranking, intervention/BK workflows, assignments/materials/student login, payments, premium, forum, broadcast campaigns, push delivery, and Sprint 007 work.
 
+## Sprint 006 Build Notes (Builder)
+
+- Added `grades` and `student_notes` tables (migration `0003_*`) and extended `school_settings` with `default_kkm` (default 75). No raport/averages/ranking/scoring tables.
+- Added `packages/db/src/academicRecords.ts`: grade create/update/publish + teacher/parent lists + KKM summary; note create/update/publish/unpublish + teacher/parent lists.
+- KKM is percentage-based per Architect correction: `isBelowKkm = (score/maxScore)*100 < kkm`; KKM stored per grade (default from settings when omitted).
+- Grades default `draft`, notes default `internal`; parent endpoints return published-only. Publish notifies linked parents once (idempotent); post-publish grade edits audited (`grade.updated`) without re-notifying; note publish/unpublish/published-update audited. Notes never touch `objective_status`.
+- Teacher/admin routes class-scoped (reuse `assertCanOperateClass`); parent routes session-only via `parent_student_links`. No client `school_id` trusted.
+- Minimal UI: teacher `TeacherGradesNotes` panel in Papan Pagi (grade/note entry + publish/unpublish); parent grades + published notes cards in `ParentHome`.
+- Validation: 100 tests pass (17 tenant + 25 onboarding + 20 daily-loop + 17 parent-trust + 21 academic-records); `pnpm typecheck` clean; `apps/web` builds. (Includes Architect PR #5 fixes: score≤maxScore validation, concurrency-safe publish.)
+
 ## Next Actions
 
-- Send Sprint 006 to Claude using `planning/sprints/006-nilai-catatan/claude-start-prompt.md`.
-- Ask Claude for the pre-edit implementation plan only.
-- Review Claude's plan before approving code changes.
+- Architect reviews Sprint 006 output against `planning/sprints/006-nilai-catatan/acceptance.md`.
+- Sprint 006 completes the initial 001–006 roadmap; next sprint scope (007+) is an Architect decision.
 - Optional follow-up: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` to exercise the full Better Auth HTTP flow end-to-end.
 
 ## Blockers

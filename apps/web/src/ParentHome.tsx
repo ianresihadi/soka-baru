@@ -67,6 +67,10 @@ export function ParentHome() {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [thread, setThread] = useState<{ messages: Msg[] } | null>(null);
   const [reply, setReply] = useState("");
+  const [grades, setGrades] = useState<
+    { id: string; subject: string; assessmentName: string; score: number; maxScore: number; kkm: number; isBelowKkm: boolean }[]
+  >([]);
+  const [pubNotes, setPubNotes] = useState<{ id: string; category: string; body: string }[]>([]);
 
   async function loadHome(sid?: string) {
     const h = await getJson<Home>(`/parent/home${sid ? `?studentId=${sid}` : ""}`);
@@ -77,6 +81,8 @@ export function ParentHome() {
       setAttendance((await getJson<{ records: AttRow[] }>(`/parent/attendance?studentId=${child}`))?.records ?? []);
       setNotifs((await getJson<{ notifications: Notif[] }>(`/parent/notifications?studentId=${child}`))?.notifications ?? []);
       setThreads((await getJson<{ threads: Thread[] }>(`/parent/messages/threads?studentId=${child}`))?.threads ?? []);
+      setGrades((await getJson<{ grades: typeof grades }>(`/parent/grades?studentId=${child}`))?.grades ?? []);
+      setPubNotes((await getJson<{ notes: typeof pubNotes }>(`/parent/student-notes?studentId=${child}`))?.notes ?? []);
     }
   }
 
@@ -196,6 +202,35 @@ export function ParentHome() {
           {attendance.length === 0 && (
             <li className="text-gray-500">Belum ada catatan absensi.</li>
           )}
+        </ul>
+      </div>
+
+      {/* Nilai (published only) */}
+      <div className="rounded-xl border bg-white p-4">
+        <h3 className="text-sm font-semibold">Nilai</h3>
+        <ul className="mt-2 space-y-1 text-sm">
+          {grades.map((gr) => (
+            <li key={gr.id} className="flex justify-between">
+              <span>{gr.subject} — {gr.assessmentName}</span>
+              <span className={gr.isBelowKkm ? "text-red-600" : "text-green-700"}>
+                {gr.score}/{gr.maxScore} {gr.isBelowKkm ? "(di bawah KKM)" : "(memenuhi KKM)"}
+              </span>
+            </li>
+          ))}
+          {grades.length === 0 && <li className="text-gray-500">Belum ada nilai dipublikasikan.</li>}
+        </ul>
+      </div>
+
+      {/* Catatan (published only) */}
+      <div className="rounded-xl border bg-white p-4">
+        <h3 className="text-sm font-semibold">Catatan dari Guru</h3>
+        <ul className="mt-2 space-y-1 text-sm">
+          {pubNotes.map((nt) => (
+            <li key={nt.id}>
+              <span className="text-xs text-gray-500">[{nt.category}]</span> {nt.body}
+            </li>
+          ))}
+          {pubNotes.length === 0 && <li className="text-gray-500">Belum ada catatan dibagikan.</li>}
         </ul>
       </div>
 

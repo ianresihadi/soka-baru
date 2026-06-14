@@ -222,3 +222,102 @@ export const parentThreadsQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).optional(),
 });
 export type ParentThreadsQuery = z.infer<typeof parentThreadsQuerySchema>;
+
+// --- Sprint 006: Nilai & Catatan ---------------------------------------------
+
+export const GRADE_VISIBILITY_STATUSES = ["draft", "published"] as const;
+export const gradeVisibilitySchema = z.enum(GRADE_VISIBILITY_STATUSES);
+export type GradeVisibility = z.infer<typeof gradeVisibilitySchema>;
+
+export const STUDENT_NOTE_VISIBILITY_STATUSES = ["internal", "published"] as const;
+export const studentNoteVisibilitySchema = z.enum(STUDENT_NOTE_VISIBILITY_STATUSES);
+export type StudentNoteVisibility = z.infer<typeof studentNoteVisibilitySchema>;
+
+export const STUDENT_NOTE_CATEGORIES = [
+  "general",
+  "academic",
+  "attendance",
+  "wellbeing",
+] as const;
+export const studentNoteCategorySchema = z.enum(STUDENT_NOTE_CATEGORIES);
+export type StudentNoteCategory = z.infer<typeof studentNoteCategorySchema>;
+
+const score0to100 = z.number().int().min(0).max(100);
+
+export const createGradeSchema = z.object({
+  studentId: z.string().uuid(),
+  subject: z.string().min(1),
+  assessmentName: z.string().min(1),
+  assessmentDate: attendanceDateSchema,
+  score: score0to100,
+  maxScore: z.number().int().min(1).max(100).optional(),
+  kkm: score0to100.optional(),
+});
+export type CreateGradeInput = z.infer<typeof createGradeSchema>;
+
+export const updateGradeSchema = z.object({
+  subject: z.string().min(1).optional(),
+  assessmentName: z.string().min(1).optional(),
+  assessmentDate: attendanceDateSchema.optional(),
+  score: score0to100.optional(),
+  maxScore: z.number().int().min(1).max(100).optional(),
+  kkm: score0to100.optional(),
+});
+export type UpdateGradeInput = z.infer<typeof updateGradeSchema>;
+
+export const gradeListQuerySchema = z.object({
+  studentId: z.string().uuid().optional(),
+  subject: z.string().min(1).optional(),
+  visibility: gradeVisibilitySchema.optional(),
+  limit: z.coerce.number().int().positive().max(200).optional(),
+});
+export type GradeListQuery = z.infer<typeof gradeListQuerySchema>;
+
+export const parentGradesQuerySchema = z.object({
+  studentId: z.string().uuid().optional(),
+  limit: z.coerce.number().int().positive().max(200).optional(),
+});
+export type ParentGradesQuery = z.infer<typeof parentGradesQuerySchema>;
+
+export const createStudentNoteSchema = z.object({
+  studentId: z.string().uuid(),
+  category: studentNoteCategorySchema,
+  body: z.string().min(1),
+});
+export type CreateStudentNoteInput = z.infer<typeof createStudentNoteSchema>;
+
+export const updateStudentNoteSchema = z.object({
+  category: studentNoteCategorySchema.optional(),
+  body: z.string().min(1).optional(),
+});
+export type UpdateStudentNoteInput = z.infer<typeof updateStudentNoteSchema>;
+
+export const studentNotesQuerySchema = z.object({
+  studentId: z.string().uuid().optional(),
+  visibility: studentNoteVisibilitySchema.optional(),
+  limit: z.coerce.number().int().positive().max(200).optional(),
+});
+export type StudentNotesQuery = z.infer<typeof studentNotesQuerySchema>;
+
+export const parentStudentNotesQuerySchema = z.object({
+  studentId: z.string().uuid().optional(),
+  limit: z.coerce.number().int().positive().max(200).optional(),
+});
+export type ParentStudentNotesQuery = z.infer<
+  typeof parentStudentNotesQuerySchema
+>;
+
+export const GRADE_LIMITS = { default: 50, max: 200 } as const;
+export const NOTE_LIMITS = { default: 50, max: 200 } as const;
+
+/**
+ * KKM is a 0-100 threshold. Because maxScore may differ from 100, compare the
+ * percentage score against the KKM threshold — never raw score vs kkm.
+ */
+export function scorePercent(score: number, maxScore: number): number {
+  if (maxScore <= 0) return 0;
+  return (score / maxScore) * 100;
+}
+export function isBelowKkm(score: number, maxScore: number, kkm: number): boolean {
+  return scorePercent(score, maxScore) < kkm;
+}

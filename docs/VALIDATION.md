@@ -15,7 +15,8 @@ SOKA Baru should prove correctness through both technical tests and school-workf
 | Area | Validation Method | Status | Notes |
 |---|---|---|---|
 | Product scope | Grill decisions recorded in planning files. | In progress | Session 0 started. |
-| Role access | Permission matrix, backend tenant-isolation tests, and optional RLS tests. | Done (Sprint 002/003/004/005) | 79 automated tests across `tenant`/`onboarding`/`daily-loop`/`parent-trust`. RLS deferred. |
+| Role access | Permission matrix, backend tenant-isolation tests, and optional RLS tests. | Done (Sprint 002–006) | 100 automated tests across `tenant`/`onboarding`/`daily-loop`/`parent-trust`/`academic-records`. RLS deferred. |
+| Grades | Tests for KKM, finalization, and parent visibility. | Done (Sprint 006) | `academic-records.test.ts`: draft/publish, percentage KKM, parent published-only, audit. |
 | Parent messaging | Workflow tests across staff and parent roles. | Done (Sprint 004/005) | Teacher side in `daily-loop`; parent side in `parent-trust`. |
 | Attendance | Unit/integration tests plus manual workflow check. | Done (Sprint 004) | `apps/api/src/__tests__/daily-loop.test.ts`. |
 | Onboarding | Tests for school/class/student/teacher setup and parent links across two schools. | Done (Sprint 003) | `apps/api/src/__tests__/onboarding.test.ts`. |
@@ -139,5 +140,34 @@ migrations). What is proven:
 - `needsAction` is true when any unread notification exists for the child, even
   if the latest notification is already read (older-unread case).
 
-Total suite: 79 tests across `tenant` (17), `onboarding` (25), `daily-loop` (20),
-`parent-trust` (17). No schema change in Sprint 005 (reused `notifications.read_at`).
+Total suite (through Sprint 005): 79 tests across `tenant` (17), `onboarding`
+(25), `daily-loop` (20), `parent-trust` (17). No schema change in Sprint 005
+(reused `notifications.read_at`).
+
+## Sprint 006 — Nilai & Catatan
+
+Automated tests in `apps/api/src/__tests__/academic-records.test.ts` (PGlite +
+real migrations). What is proven:
+
+- Teacher creates a draft grade for an assigned class; KKM defaults from
+  `school_settings.default_kkm` and is stored on the grade.
+- Unassigned teacher rejected (403); student outside the class/school rejected
+  (422); teacher grade list is class/tenant scoped.
+- `isBelowKkm` uses percentage: score 16/20 vs KKM 75 → not below; 14/20 → below.
+- Parent sees only published grades for a linked child; not drafts; not another
+  child's; grade summary counts below-KKM from stored KKM.
+- Publishing a grade notifies linked parents once and is idempotent; updating a
+  published grade writes a `grade.updated` audit.
+- Teacher creates an internal note; parent cannot see it; publishing shows it to
+  the parent, notifies once (idempotent), and audits; unpublishing removes
+  parent visibility and audits; cross-child note access rejected.
+- Notes never mutate `students.objective_status`.
+- Cross-school grade creation rejected; `orang_tua` blocked from `/guru/*`;
+  parent grade route returns published-only.
+- Grade create/update reject `score > maxScore` (incl. patching only score or
+  only maxScore).
+- Two concurrent grade publishes notify exactly once; two concurrent note
+  publishes notify once and audit once (conditional-claim publish).
+
+Total suite: 100 tests across `tenant` (17), `onboarding` (25), `daily-loop`
+(20), `parent-trust` (17), `academic-records` (21).

@@ -1,6 +1,8 @@
 import {
   boolean,
   date,
+  index,
+  integer,
   jsonb,
   pgTable,
   text,
@@ -260,6 +262,8 @@ export const schoolSettings = pgTable("school_settings", {
   attendanceCutoffTime: text("attendance_cutoff_time").notNull().default("07:30"),
   // IANA timezone used to interpret the cutoff as wall-clock time.
   schoolTimezone: text("school_timezone").notNull().default("Asia/Jakarta"),
+  // Default KKM (0-100 threshold) applied when a grade omits its own KKM.
+  defaultKkm: integer("default_kkm").notNull().default(75),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -367,3 +371,99 @@ export const notifications = pgTable("notifications", {
   readAt: timestamp("read_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+// ---------------------------------------------------------------------------
+// Sprint 006 — Nilai & Catatan (all school-owned / tenant-scoped)
+// ---------------------------------------------------------------------------
+
+/** Basic grade record ("nilai dasar terhadap KKM"), not a full raport. */
+export const grades = pgTable(
+  "grades",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    classId: uuid("class_id").references(() => classes.id, {
+      onDelete: "set null",
+    }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    subject: text("subject").notNull(),
+    assessmentName: text("assessment_name").notNull(),
+    assessmentDate: date("assessment_date").notNull(),
+    score: integer("score").notNull(),
+    maxScore: integer("max_score").notNull().default(100),
+    // KKM threshold (0-100) stored per record so later setting changes do not
+    // rewrite historical meaning.
+    kkm: integer("kkm").notNull(),
+    visibilityStatus: text("visibility_status").notNull().default("draft"), // draft | published
+    publishedAt: timestamp("published_at"),
+    recordedByMembershipId: uuid("recorded_by_membership_id")
+      .notNull()
+      .references(() => schoolMemberships.id),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    byClassDate: index("grades_class_date").on(
+      t.schoolId,
+      t.classId,
+      t.assessmentDate,
+    ),
+    byStudentDate: index("grades_student_date").on(
+      t.schoolId,
+      t.studentId,
+      t.assessmentDate,
+    ),
+    byStudentVisibility: index("grades_student_visibility").on(
+      t.schoolId,
+      t.studentId,
+      t.visibilityStatus,
+    ),
+  }),
+);
+
+/** Qualitative student note, internal-only by default. No scoring. */
+export const studentNotes = pgTable(
+  "student_notes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    schoolId: uuid("school_id")
+      .notNull()
+      .references(() => schools.id, { onDelete: "cascade" }),
+    classId: uuid("class_id").references(() => classes.id, {
+      onDelete: "set null",
+    }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    authorMembershipId: uuid("author_membership_id")
+      .notNull()
+      .references(() => schoolMemberships.id),
+    category: text("category").notNull(), // general | academic | attendance | wellbeing
+    body: text("body").notNull(),
+    visibilityStatus: text("visibility_status").notNull().default("internal"), // internal | published
+    publishedAt: timestamp("published_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    byStudentCreated: index("student_notes_student_created").on(
+      t.schoolId,
+      t.studentId,
+      t.createdAt,
+    ),
+    byStudentVisibility: index("student_notes_student_visibility").on(
+      t.schoolId,
+      t.studentId,
+      t.visibilityStatus,
+    ),
+    byClassCreated: index("student_notes_class_created").on(
+      t.schoolId,
+      t.classId,
+      t.createdAt,
+    ),
+  }),
+);
