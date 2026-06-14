@@ -60,9 +60,9 @@ Move to Claude when all of these are true:
 - The stack and core business rules needed by the sprint are no longer open questions.
 - The Builder can implement without inventing product scope.
 
-For the current project state, Ian should stay with Architect.
+For the current project state, Ian can move to Claude for Sprint 007 pre-edit implementation planning.
 
-The initial 001-006 roadmap is complete and merged. There is no active Builder sprint. Claude should not begin Sprint 007 until Architect creates detailed sprint artifacts and Ian approves the handoff.
+Sprint 007: Pilot Readiness & App Shell is detailed and ready for Builder planning. Claude must start from `planning/sprints/007-pilot-readiness-app-shell/claude-start-prompt.md`, produce a plan first, and wait for Ian approval before editing files.
 
 ## When To Stay With Architect
 
@@ -182,18 +182,18 @@ Current status:
 - Sprint 004 Guru Daily Loop is merged and accepted.
 - Sprint 005 Parent Trust Loop is merged and accepted.
 - Sprint 006 Nilai & Catatan is merged and accepted.
-- No active Builder sprint is approved right now.
+- Sprint 007 Pilot Readiness & App Shell is ready for Builder implementation planning.
 
-Claude must not build Sprint 007 from conversation context. Sprint 007 must first have detailed `requirements.md`, `blueprint.md`, `acceptance.md`, `handoff-prompt.md`, and `claude-start-prompt.md`.
+Claude must implement Sprint 007 only after Ian approves the pre-edit plan. Claude must not add new modules, full admin/TU UI, full raport, payments/premium, student login, learning workflows, principal analytics, broadcast/pengumuman, push delivery, provider replacement, or Sprint 008 work.
 
 ## Recommended Ian Workflow Right Now
 
-1. Stay with Architect for checkpoint and Sprint 007 selection.
-2. Choose the next track: recommended default is Pilot Readiness & App Shell.
-3. Ask Architect to detail Sprint 007 requirements, blueprint, acceptance criteria, handoff prompt, and Claude start prompt.
-4. Move to Claude only after the Sprint 007 handoff exists and Ian approves it.
-5. Ask Claude for a pre-edit implementation plan only.
-6. Bring Claude's plan back to Architect if it changes scope, permissions, data ownership, deployment posture, or role behavior.
+1. Open Claude in `C:\Users\USER\Documents\SOKA`.
+2. Paste the Sprint 007 Claude start prompt from `planning/sprints/007-pilot-readiness-app-shell/claude-start-prompt.md`.
+3. Ask Claude to read files and produce the pre-edit implementation plan only.
+4. Review Claude's plan.
+5. If the plan stays inside Sprint 007, approve implementation.
+6. If the plan changes scope, permissions, data ownership, deployment posture, parent visibility, or role behavior, bring it back to Architect before coding.
 
 ## Architect Review Checklist For The Next Builder Plan
 
@@ -201,12 +201,12 @@ Claude's plan is acceptable if it:
 
 - Uses React/Vite/TypeScript/Tailwind, Hono, Drizzle, Better Auth, and Neon Postgres.
 - Does not reintroduce Supabase as the baseline backend.
-- Adds only the approved next sprint workflows once Sprint 007 is detailed.
+- Adds only the approved Sprint 007 readiness work: app shell, role navigation, login/session clarity, setup docs, validation gate, and pilot smoke checklist.
 - Enforces tenant isolation from server-side membership context, not client `school_id`.
 - Respects parent access rules from `parent_student_links` and the caller's memberships.
 - Keeps MVP module boundaries from `planning/MODULE-CLASSIFICATION.md`.
 - Includes validation proving School A cannot access School B.
-- Stays out of full raport/finalization, formulas/averages/ranking, behavior scoring, case management, assignments/materials/student login, payments/premium, forum, broadcast campaigns, push delivery, and any future module not explicitly approved for the sprint.
+- Stays out of Pengumuman/broadcast, full admin/TU UI, full raport/finalization, formulas/averages/ranking, behavior scoring, case management, assignments/materials/student login, payments/premium, forum, push delivery, and Sprint 008.
 
 ## Completion Gate For Future Sprints
 

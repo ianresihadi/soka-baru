@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is detailed and ready for Builder implementation planning.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Architect checkpoint after the initial 001-006 roadmap. No active Builder sprint is approved right now. Claude should not begin Sprint 007 until Architect creates detailed sprint artifacts and Ian approves the handoff.
+Builder Layer: Sprint 007 Pilot Readiness & App Shell is ready for Claude pre-edit implementation planning. Claude must start from `planning/sprints/007-pilot-readiness-app-shell/claude-start-prompt.md`, produce a plan first, and wait for Ian approval before editing files.
 
 ## Recently Completed
 
@@ -192,12 +192,20 @@ Architect checkpoint after the initial 001-006 roadmap. No active Builder sprint
 - The core MVP foundation now exists in code: tenant-aware auth/membership, minimal onboarding, teacher daily loop, parent trust loop, and basic grades/qualitative notes.
 - The system has a useful test spine: 100 API tests cover tenant isolation, role guards, parent visibility boundaries, attendance correction, notification behavior, parent trust reads, grade publication, note publication, and concurrency-sensitive writes.
 - The product is not yet pilot-ready for a real school without another hardening sprint. Remaining gaps include live Neon/Better Auth HTTP verification, production environment setup, demo/seed flows, polished app shell/navigation, admin usability for setup, and deployment/CI smoke checks.
-- Recommended next direction: Sprint 007 should prioritize pilot readiness and app-shell consolidation before adding another broad product module.
+- Selected next direction: Sprint 007 prioritizes pilot readiness and app-shell consolidation before adding another broad product module.
+
+## Sprint 007 Handoff Notes (Architect)
+
+- Detailed Sprint 007 requirements, blueprint, acceptance criteria, handoff prompt, Claude start prompt, and placeholder completion notes.
+- Sprint 007 scope is consolidation: role-aware app shell, clearer login/session state, teacher/parent navigation for existing workflows, setup docs, validation gate, and pilot smoke checklist.
+- Sprint 007 should not add new modules. It explicitly defers Pengumuman, full admin/TU UI, full raport, payments/premium, student login, learning workflows, principal analytics, browser/native push, and provider replacement.
+- Builder may add a lightweight `pnpm validate` script and improve deterministic seed/demo documentation if needed, but should not introduce Turborepo/Nx or a heavy new test stack.
 
 ## Next Actions
 
-- Architect details Sprint 007 only after choosing the next track.
-- Recommended Sprint 007 track: Pilot Readiness & App Shell, focused on making the existing 001-006 functionality usable, demoable, and deployable for a first school pilot.
+- Move to Claude with `planning/sprints/007-pilot-readiness-app-shell/claude-start-prompt.md`.
+- Ask Claude to read the required files and produce the pre-edit implementation plan only.
+- Bring Claude's plan back to Architect if it adds a new module, changes auth/tenancy/permissions, changes parent visibility, or expands beyond pilot readiness.
 - Optional verification before or inside Sprint 007: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` and exercise the full Better Auth HTTP flow end-to-end.
 
 ## Blockers

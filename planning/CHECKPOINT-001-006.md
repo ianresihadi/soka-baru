@@ -41,9 +41,9 @@ Remaining gaps:
 - Practical admin setup UI for school/class/student/teacher/parent-link onboarding.
 - Real browser/native push delivery remains deferred; in-app notifications are the current MVP baseline.
 
-## Recommended Sprint 007
+## Selected Sprint 007
 
-Recommended next sprint: **Pilot Readiness & App Shell**.
+Selected next sprint: **Pilot Readiness & App Shell**.
 
 Purpose:
 
@@ -78,4 +78,4 @@ If Ian wants a different immediate outcome, the next sprint can instead focus on
 - **UX Consolidation** if the immediate goal is a polished demoable interface.
 - **Pengumuman** if parent broadcast communication becomes a sales requirement.
 
-Architect recommendation remains: harden pilot readiness before expanding module breadth.
+Architect direction remains: harden pilot readiness before expanding module breadth.

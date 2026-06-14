@@ -31,6 +31,9 @@ Do not use this file as a dumping ground for project history or sprint details.
 
 ## Current Builder Entry Point
 
-No active Builder sprint is approved right now.
+For Sprint 007, start from:
 
-The initial 001-006 roadmap is complete and merged. Wait for Architect to detail and approve Sprint 007 before implementation planning. Do not start Sprint 007 from chat context or memory; start only from the future `planning/sprints/007-*/claude-start-prompt.md` after it exists.
+`planning/sprints/007-pilot-readiness-app-shell/claude-start-prompt.md`
+
+First produce the pre-edit implementation plan only. Do not edit files until Ian
+approves the plan or asks for Architect review.
