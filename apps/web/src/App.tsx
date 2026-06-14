@@ -20,6 +20,8 @@ export function App() {
   );
   const [memberships, setMemberships] = useState<MembershipSummary[]>([]);
   const [email, setEmail] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
 
   async function loadAuthedState(session: Session) {
     setMemberships(await getMemberships());
@@ -44,10 +46,26 @@ export function App() {
   }
 
   async function handleSignOut() {
-    await signOut();
-    setMemberships([]);
-    setEmail(null);
-    setPhase("signed-out");
+    setSignOutError(null);
+    setSigningOut(true);
+    let ok = false;
+    try {
+      ok = await signOut();
+    } catch {
+      ok = false;
+    }
+    setSigningOut(false);
+    if (ok) {
+      // Server session is cleared — only now drop local authenticated state.
+      setMemberships([]);
+      setEmail(null);
+      setPhase("signed-out");
+      return;
+    }
+    // Sign-out did not clear the server session. Keep the user in the
+    // authenticated shell and surface a clear error — never a client-only
+    // fake sign-out.
+    setSignOutError("Gagal keluar. Sesi masih aktif — coba lagi.");
   }
 
   if (phase === "loading") {
@@ -67,6 +85,8 @@ export function App() {
       email={email}
       memberships={memberships}
       onSignOut={handleSignOut}
+      signingOut={signingOut}
+      signOutError={signOutError}
     />
   );
 }

@@ -102,6 +102,16 @@ in-process PGlite tests cover the underlying logic).
 - `planning/DECISIONS.md` unchanged — no new durable product/architecture decision
   beyond what the sprint plan already captured.
 
+## Architect review fixes (PR #6)
+
+- P2 (sign-out): `App.tsx` now only clears local authenticated state when
+  `signOut()` returns `true` (server session actually cleared). On failure it
+  keeps the user in the authenticated shell and shows a clear error
+  ("Gagal keluar. Sesi masih aktif — coba lagi.") with a retry, and the Keluar
+  button shows an in-progress/disabled state. No client-only fake sign-out.
+- Re-ran `pnpm test` (100/100), `pnpm typecheck` (clean), `pnpm --filter
+  @soka/web build` (ok), `pnpm validate` (ok).
+
 ## Explicit deferrals
 
 No new modules. Not built: Pengumuman/broadcast, full admin/TU UI, full

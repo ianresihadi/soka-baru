@@ -14,10 +14,14 @@ export function AppShell({
   email,
   memberships,
   onSignOut,
+  signingOut = false,
+  signOutError = null,
 }: {
   email: string | null;
   memberships: MembershipSummary[];
   onSignOut: () => void;
+  signingOut?: boolean;
+  signOutError?: string | null;
 }) {
   const access = useMemo(
     () => deriveWorkspaceAccess(memberships),
@@ -58,12 +62,28 @@ export function AppShell({
             <button
               type="button"
               onClick={onSignOut}
-              className="rounded-lg border border-slate-300 px-3 py-1 text-sm text-slate-600 hover:bg-slate-100"
+              disabled={signingOut}
+              className="rounded-lg border border-slate-300 px-3 py-1 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-60"
             >
-              Keluar
+              {signingOut ? "Keluar…" : "Keluar"}
             </button>
           </div>
         </div>
+        {signOutError && (
+          <div className="border-t border-red-100 bg-red-50">
+            <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-1.5">
+              <span className="text-xs text-red-700">{signOutError}</span>
+              <button
+                type="button"
+                onClick={onSignOut}
+                disabled={signingOut}
+                className="shrink-0 rounded border border-red-300 px-2 py-0.5 text-xs text-red-700 hover:bg-red-100 disabled:opacity-60"
+              >
+                Coba lagi
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       <main>
