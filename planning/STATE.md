@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is detailed and ready for Builder implementation planning.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is implemented by Builder and ready for Architect review (PR not merged).
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Builder Layer: Sprint 007 Pilot Readiness & App Shell is ready for Claude pre-edit implementation planning. Claude must start from `planning/sprints/007-pilot-readiness-app-shell/claude-start-prompt.md`, produce a plan first, and wait for Ian approval before editing files.
+Builder Layer: Sprint 007 Pilot Readiness & App Shell is implemented on branch `claude/zealous-gauss-48du5s` and awaiting Architect review. The pre-edit plan was approved by Ian with Architect guardrails (idempotent local-dev seed, real Better-Auth sign-out only, no dead nav, no schema/migration, parent visibility unchanged). No PR has been merged.
 
 ## Recently Completed
 
@@ -201,12 +201,22 @@ Builder Layer: Sprint 007 Pilot Readiness & App Shell is ready for Claude pre-ed
 - Sprint 007 should not add new modules. It explicitly defers Pengumuman, full admin/TU UI, full raport, payments/premium, student login, learning workflows, principal analytics, browser/native push, and provider replacement.
 - Builder may add a lightweight `pnpm validate` script and improve deterministic seed/demo documentation if needed, but should not introduce Turborepo/Nx or a heavy new test stack.
 
+## Sprint 007 Build Notes (Builder)
+
+- Replaced the Sprint 002 "Foundation Validation" console with a role-aware app shell in `apps/web`: `App.tsx` (session-first root), `AppShell.tsx` (header with school/role context + real sign-out + empty state), `LoginPanel.tsx`, `RoleSwitcher.tsx`, `TeacherWorkspace.tsx`, `ParentWorkspace.tsx`, and `api.ts` (typed session/membership/sign-in/sign-out client + role→workspace derivation). Raw API logs and tenant-check diagnostic buttons removed from the UI.
+- Session resolved from `GET /me`; workspaces derived from `GET /me/memberships` (teacher for `guru`/`wali_kelas`/`admin_sekolah`/`soka_internal`, parent for `orang_tua`); both-role users get a switcher; no-role users see a clear empty state.
+- Sign-out is the real Better Auth `POST /api/auth/sign-out` (clears server session); no client-only fake sign-out. No client-supplied `school_id`.
+- Teacher and parent surfaces reuse existing `PapanPagi`/`ParentHome`; added anchor ids + chip nav pointing only to real sections (no dead routes). "Pesan Ortu" anchors to the existing unreplied-status section (existing reply API unchanged). Parent visibility unchanged: published-only `/parent/*` endpoints; no draft grades / internal notes.
+- Extended `packages/db/src/seed.ts` deterministically/idempotently (local-dev only): School A gets class Kelas 1A, three students, `guru.a` as `wali_kelas`, and `multi@example.com` linked as `orang_tua` of Adinda Putri — giving one teacher + one parent happy path. No schema/migration; no new credentials; no auth bypass.
+- Added root `pnpm validate` (= test + typecheck + web build; no install). No Turborepo/Nx.
+- Added `docs/SETUP.md` and `docs/PILOT_SMOKE_CHECKLIST.md`; updated `docs/VALIDATION.md`, `README.md`. `docs/API.md`/`PERMISSIONS.md`/`UX_VISUAL_STANDARD.md` and `planning/DECISIONS.md` unchanged (no behavior/decision change).
+- Validation: `pnpm install` ok; `pnpm validate` ok → 100/100 API tests passing (unchanged), typecheck clean across all packages incl. the new shell, web build succeeds. Live Neon migrate/seed + full Better Auth HTTP flow not exercised here (no `DATABASE_URL`); documented for manual verification.
+
 ## Next Actions
 
-- Move to Claude with `planning/sprints/007-pilot-readiness-app-shell/claude-start-prompt.md`.
-- Ask Claude to read the required files and produce the pre-edit implementation plan only.
-- Bring Claude's plan back to Architect if it adds a new module, changes auth/tenancy/permissions, changes parent visibility, or expands beyond pilot readiness.
-- Optional verification before or inside Sprint 007: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` and exercise the full Better Auth HTTP flow end-to-end.
+- Architect review of the Sprint 007 branch against the acceptance gate (coherent app shell, intact parent-visibility boundaries, passing validation, actionable setup/smoke docs, no new module scope).
+- Optional live verification: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` and walk `docs/PILOT_SMOKE_CHECKLIST.md` end-to-end (incl. the Better Auth HTTP sign-in/sign-out flow).
+- Do not start Sprint 008 until Sprint 007 is accepted.
 
 ## Blockers
 
