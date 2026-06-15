@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is merged and accepted via PR #7. Sprint 009: Pilot Environment / Live Smoke Hardening is merged and accepted via PR #8.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is merged and accepted via PR #7. Sprint 009: Pilot Environment / Live Smoke Hardening is merged and accepted via PR #8. Sprint 010: Pilot UX & Visual Productization is detailed and ready for Builder pre-edit implementation planning.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Architect Layer: Sprint 009 is accepted after PR #8 merge. There is no active Builder sprint. Next step is to run the live/pilot setup path locally or against a real Postgres database, then choose whether Sprint 010 should be Pengumuman, deployment/CI hardening, or another pilot-readiness slice.
+Architect Layer: Sprint 010 Pilot UX & Visual Productization has approved planning artifacts. Next step is to move to Claude for a pre-edit implementation plan only, then return to Architect if the plan adds modules, backend schema, auth/role changes, deployment work, or weakens tenant/parent boundaries.
 
 ## Sprint 009 Build Notes (Builder)
 
@@ -278,3 +278,16 @@ Architect Layer: Sprint 009 is accepted after PR #8 merge. There is no active Bu
 
 - Full live Better Auth HTTP smoke has not yet been proven on Ian's local/live environment. Sprint 009 added the tooling and docs; the remaining work is to run it with a real database/API.
 - If `corepack` is unavailable, install/fix Node.js first. If `pnpm check:env` fails, fix `.env` before migration or seed.
+
+## Sprint 010 Handoff Notes (Architect)
+
+- Detailed Sprint 010 requirements, blueprint, acceptance criteria, handoff prompt, Claude start prompt, and placeholder completion notes.
+- Sprint 010 scope is productization of the existing MVP surfaces: app shell, teacher Papan Pagi/daily loop, parent trust loop, admin setup, lightweight visual system, responsive visual QA, and supporting docs.
+- Sprint 010 should make the running app feel credible for a controlled pilot while preserving the approved product principle: hangat, ramah, tertib, dan operasional.
+- Sprint 010 explicitly defers Pengumuman, push delivery, payments, full raport, student login, learning workflows, principal analytics, full TU/admin, backend product modules, schema migrations, auth/role changes, and Sprint 011.
+
+## Next Actions After Sprint 010 Planning
+
+- Move to Claude with `planning/sprints/010-pilot-ux-visual-productization/claude-start-prompt.md`.
+- Ask Claude to read the required files and produce the pre-edit implementation plan only.
+- Bring Claude's plan back to Architect if it adds modules, backend schema, auth/role changes, deployment work, provider lock-in, weakens tenant/parent boundaries, or starts Sprint 011.

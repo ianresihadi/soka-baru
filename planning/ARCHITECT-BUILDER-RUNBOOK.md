@@ -60,9 +60,9 @@ Move to Claude when all of these are true:
 - The stack and core business rules needed by the sprint are no longer open questions.
 - The Builder can implement without inventing product scope.
 
-For the current project state, Ian should not move to Claude yet for a new sprint.
+For the current project state, Ian can move to Claude for Sprint 010 pre-edit implementation planning.
 
-Sprint 009: Pilot Environment / Live Smoke Hardening is merged and accepted. Sprint 010 is not selected or detailed yet. Stay with Architect until Sprint 010 has requirements, blueprint, acceptance criteria, handoff prompt, and Claude start prompt.
+Sprint 010: Pilot UX & Visual Productization is detailed and ready for Builder planning. Claude must start from `planning/sprints/010-pilot-ux-visual-productization/claude-start-prompt.md`, produce a plan first, and wait for Ian approval before editing files.
 
 ## When To Stay With Architect
 
@@ -185,16 +185,18 @@ Current status:
 - Sprint 007 Pilot Readiness & App Shell is merged and accepted.
 - Sprint 008 Admin Setup UI Hardening is merged and accepted.
 - Sprint 009 Pilot Environment / Live Smoke Hardening is merged and accepted.
-- Sprint 010 is not yet selected or detailed.
+- Sprint 010 Pilot UX & Visual Productization is ready for Builder implementation planning.
 
-Claude must not start Sprint 010 until Architect creates the Sprint 010 files and Ian approves the handoff.
+Claude must implement Sprint 010 only after Ian approves the pre-edit plan. Claude must not add Pengumuman, push delivery, payments, full raport, student login, principal analytics, full TU, backend product modules, auth/role changes, schema migrations, or Sprint 011 work.
 
 ## Recommended Ian Workflow Right Now
 
-1. Stay in Architect until the live smoke path from Sprint 009 is tried or a clear Sprint 010 direction is selected.
-2. Run the setup/live-smoke path from `docs/SETUP.md` if the goal is to see the app working locally.
-3. If a blocker appears during setup or live smoke, bring the exact command/output back to Architect before asking Claude to code.
-4. If choosing Sprint 010, ask Architect to detail requirements, blueprint, acceptance criteria, handoff prompt, and Claude start prompt first.
+1. Open Claude in `C:\Users\USER\Documents\SOKA`.
+2. Paste the Sprint 010 Claude start prompt from `planning/sprints/010-pilot-ux-visual-productization/claude-start-prompt.md`.
+3. Ask Claude to read files and produce the pre-edit implementation plan only.
+4. Review Claude's plan.
+5. If the plan stays inside Sprint 010, approve implementation.
+6. If the plan adds modules, backend schema, auth/role changes, deployment work, or weakens tenant/parent boundaries, bring it back to Architect before coding.
 
 ## Architect Review Checklist For The Next Builder Plan
 
@@ -202,7 +204,7 @@ Claude's plan is acceptable if it:
 
 - Uses React/Vite/TypeScript/Tailwind, Hono, Drizzle, Better Auth, and Neon Postgres.
 - Does not reintroduce Supabase as the baseline backend.
-- Starts only from an approved Sprint 010 handoff once it exists.
+- Adds only the approved Sprint 010 productization work: app shell polish, teacher/admin/parent UI polish, visual system consolidation, visual QA, and docs.
 - Enforces tenant isolation from server-side membership context, not client `school_id`.
 - Respects parent access rules from `parent_student_links` and the caller's memberships.
 - Keeps MVP module boundaries from `planning/MODULE-CLASSIFICATION.md`.
