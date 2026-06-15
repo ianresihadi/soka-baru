@@ -5,13 +5,29 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is merged and accepted via PR #7. Sprint 009: Pilot Environment / Live Smoke Hardening is detailed and ready for Builder pre-edit implementation planning.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is merged and accepted via PR #7. Sprint 009: Pilot Environment / Live Smoke Hardening is implemented by Builder on branch `claude/sprint-009-live-smoke` and ready for Architect review (PR not yet opened).
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Builder Layer: Sprint 009 Pilot Environment / Live Smoke Hardening is ready for Claude pre-edit implementation planning. Claude must start from `planning/sprints/009-pilot-environment-live-smoke-hardening/claude-start-prompt.md`, produce a plan first, and wait for Ian approval before editing files.
+Builder Layer: Sprint 009 Pilot Environment / Live Smoke Hardening is implemented on branch `claude/sprint-009-live-smoke` and awaiting Architect review. Ian approved the pre-edit plan with guardrails (guarded non-overwrite `.env` autoload; `check:env` fails on missing/placeholder; `smoke:live` manual cookie jar with `getSetCookie` fallback and classified failures; `validate` story documented for Windows/Corepack; no schema/module/auth changes). No PR opened yet.
+
+## Sprint 009 Build Notes (Builder)
+
+- Added a dependency-free `.env` autoload (`packages/db/src/loadEnv.ts`, exported from `@soka/db`) wired into the live entrypoints: `apps/api/src/index.ts` (loads env, then dynamically imports `@soka/auth`/`@soka/db`/`./app` so env is set before the eager `getDb()` in auth), `packages/db/src/migrate.ts`, and `packages/db/src/seed.ts` (loads env before dynamically importing `@soka/auth`). Never overwrites already-set real env vars; no-op when no `.env`. This fixes the previously broken documented live path (nothing loaded `.env`).
+- Added `scripts/load-env.mjs` (shared loader for the Node scripts), `scripts/check-env.mjs` (`pnpm check:env`), and `scripts/live-smoke.mjs` (`pnpm smoke:live`); refreshed `scripts/README.md`. Added `check:env` and `smoke:live` package scripts. No new dependency (Node built-in `fetch`/`fs`).
+- `check:env`: validates `DATABASE_URL`/`BETTER_AUTH_SECRET`/`BETTER_AUTH_URL`/`WEB_ORIGIN` (FAIL on missing or `.env.example` placeholder, or short secret), warns on optional `PORT`/`SOKA_API_URL`/`SOKA_WEB_URL`, never prints secret values, exits non-zero on failure.
+- `smoke:live`: health → admin Better Auth sign-in (manual cookie jar via `headers.getSetCookie()` + raw-header fallback) → `/me` → `/me/memberships` (admin_sekolah) → `/admin/memberships` → sign-out → `/me` 401, then optional `guru.a` `/guru/classes` and `multi@` `/parent/children`. Read-only apart from auth session rows; classified failures (API down / seed missing / wrong creds / auth-cookie / permission).
+- `pnpm validate` left unchanged; Windows/Corepack fix (`corepack enable` + `corepack prepare pnpm@10.33.0 --activate`) documented in `docs/SETUP.md`, `scripts/README.md`, and `docs/VALIDATION.md`.
+- No schema/migration, no new module, no auth bypass, no role/permission change, no provider lock-in. `.env` stays gitignored; no secrets committed.
+- Validation in this environment: `pnpm install` ok; `pnpm test` 110/110; `pnpm typecheck` clean; `pnpm --filter @soka/web build` ok; `pnpm validate` exit 0; `pnpm check:env` verified across missing/placeholder/real `.env` states; `pnpm smoke:live` blocked (no live Postgres/API here) but `node --check` passes and it fails gracefully with exit 2 and the "API not running" classification. Live smoke is documented for Ian to run against a real DB.
+
+## Next Actions (Sprint 009)
+
+- Open the Sprint 009 PR to `main` and request Architect review (scripts small/safe, live smoke really verifies Better Auth cookies, docs executable, `pnpm validate` story clearer, 110 tests/typecheck/build green, no scope creep).
+- Optional live verification by Ian: set real `.env`, `pnpm check:env`, `pnpm db:migrate`, `pnpm db:seed`, `pnpm dev:api`, `pnpm smoke:live`, then walk `docs/PILOT_SMOKE_CHECKLIST.md`.
+- Do not start Sprint 010.
 
 ## Sprint 009 Handoff Notes (Architect)
 

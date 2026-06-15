@@ -258,3 +258,54 @@ The Admin / Setup workspace (class/student/teacher/parent-code/settings) is
 validated manually; the admin setup path is documented at the top of
 `docs/PILOT_SMOKE_CHECKLIST.md`. The frontend has no automated test runner;
 UI is covered by typecheck + build + the manual checklist.
+
+## Sprint 009 — Pilot Environment / Live Smoke Hardening
+
+Sprint 009 adds environment validation, a live HTTP smoke script, `.env`
+auto-loading for the live entrypoints, and a clearer `pnpm validate` story. It
+adds no schema, no migration, and no new product behavior; the automated suite is
+unchanged at **110 tests**.
+
+### Tooling added
+
+- `pnpm check:env` (`scripts/check-env.mjs`) — validates required live-path
+  variables (`DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`,
+  `WEB_ORIGIN`), warns on optional ones, rejects `.env.example` placeholders, and
+  never prints secret values.
+- `pnpm smoke:live` (`scripts/live-smoke.mjs`) — HTTP smoke of the Better Auth
+  session lifecycle (health → admin sign-in → `/me` → `/me/memberships` →
+  admin-only route → sign-out → `/me` 401) plus optional teacher/parent reads.
+  Manual cookie jar via `headers.getSetCookie()` with a raw-header fallback.
+  Read-only apart from normal auth session records; failures are classified.
+- `.env` is auto-loaded by `apps/api/src/index.ts`, `packages/db/src/migrate.ts`,
+  and `packages/db/src/seed.ts` via `packages/db/src/loadEnv.ts` (no dependency;
+  never overwrites already-set real env vars).
+
+### Quality-gate story
+
+`pnpm validate` is unchanged (`test && typecheck && web build`). On
+Windows/Corepack where nested `pnpm` is not on PATH, run once:
+
+```bash
+corepack enable
+corepack prepare pnpm@10.33.0 --activate
+pnpm validate
+```
+
+### Results (in this environment)
+
+- `pnpm install` — ok.
+- `pnpm test` — **110/110 passing** (unchanged).
+- `pnpm typecheck` — clean across all packages.
+- `pnpm --filter @soka/web build` — succeeds.
+- `pnpm validate` — succeeds (exit 0).
+- `pnpm check:env` — exits 1 with no/placeholder `.env` (intentional: required
+  values missing); exits 0 against a `.env` with real-looking values. Verified
+  all three states (missing → FAIL, placeholder → FAIL, real → PASS). No secret
+  values are printed.
+- `pnpm smoke:live` — **blocked**: this environment has no live Postgres server
+  and no running API, so the full HTTP flow cannot execute. Verified instead:
+  `node --check` passes for all scripts, and the script fails gracefully with the
+  classified message `cannot reach http://localhost:8787 — is the API running?`
+  and exit code 2. To run it for real: set a live `DATABASE_URL`, `pnpm db:migrate`,
+  `pnpm db:seed`, `pnpm dev:api`, then `pnpm smoke:live`.

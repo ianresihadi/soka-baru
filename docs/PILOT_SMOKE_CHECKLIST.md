@@ -19,10 +19,35 @@ Seeded references used throughout:
 
 1. [ ] Install dependencies: `pnpm install`.
 2. [ ] Configure `.env` (see `docs/SETUP.md`), incl. a live `DATABASE_URL`.
-3. [ ] Run migrations: `pnpm db:migrate`.
-4. [ ] Run seed: `pnpm db:seed`.
-5. [ ] Start API: `pnpm dev:api` (http://localhost:8787).
-6. [ ] Start web: `pnpm dev:web` (http://localhost:5173).
+3. [ ] Validate the environment: `pnpm check:env` (must pass — no missing/placeholder values).
+4. [ ] Run migrations: `pnpm db:migrate`.
+5. [ ] Run seed: `pnpm db:seed`.
+6. [ ] Start API: `pnpm dev:api` (http://localhost:8787).
+7. [ ] Start web: `pnpm dev:web` (http://localhost:5173).
+
+## Scripted smoke (run before the manual checks)
+
+Run the HTTP smoke check while the API is running and the database is seeded:
+
+```bash
+pnpm smoke:live        # set SOKA_API_URL to target a non-default API URL
+```
+
+S1. [ ] `GET /health` returns ok.
+S2. [ ] Admin (`admin.a@example.com`) signs in over Better Auth and the session
+    cookie is preserved.
+S3. [ ] `/me` and `/me/memberships` confirm the admin session (`admin_sekolah`).
+S4. [ ] An admin-only route (`/admin/memberships`) succeeds.
+S5. [ ] Sign-out clears the session (`/me` then returns 401).
+S6. [ ] Teacher (`guru.a@`) loads `/guru/classes` (Kelas 1A); parent (`multi@`)
+    loads `/parent/children` (Adinda Putri).
+
+The script exits non-zero and prints a classified reason on failure (API not
+running, seed not run, wrong credentials, auth/cookie/session failure, or
+permission failure). It is read-only apart from normal auth session records.
+It does **not** claim browser/native push is available.
+
+The manual paths below remain the human walkthrough of the same flows in the UI.
 
 ## Admin setup path (Sprint 008)
 

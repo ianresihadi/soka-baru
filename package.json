@@ -14,6 +14,8 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm --filter @soka/api test",
     "validate": "pnpm test && pnpm typecheck && pnpm --filter @soka/web build",
+    "check:env": "node scripts/check-env.mjs",
+    "smoke:live": "node scripts/live-smoke.mjs",
     "dev:api": "pnpm --filter @soka/api dev",
     "dev:web": "pnpm --filter @soka/web dev",
     "db:generate": "pnpm --filter @soka/db generate",

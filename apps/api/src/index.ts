@@ -1,7 +1,12 @@
 import { serve } from "@hono/node-server";
-import { auth } from "@soka/auth";
-import { getDb } from "@soka/db";
-import { createApp } from "./app";
+import { loadEnv } from "@soka/db";
+
+// Load .env (without overwriting real env vars) before anything reads env/DB.
+loadEnv();
+
+const { auth } = await import("@soka/auth");
+const { getDb } = await import("@soka/db");
+const { createApp } = await import("./app");
 
 const webOrigins = (process.env.WEB_ORIGIN ?? "http://localhost:5173").split(",");
 
