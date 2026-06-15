@@ -31,9 +31,9 @@ Do not use this file as a dumping ground for project history or sprint details.
 
 ## Current Builder Entry Point
 
-For Sprint 009, start from:
+No active Builder sprint is approved right now.
 
-`planning/sprints/009-pilot-environment-live-smoke-hardening/claude-start-prompt.md`
-
-First produce the pre-edit implementation plan only. Do not edit files until Ian
-approves the plan or asks for Architect review.
+Sprint 009 is merged and accepted. Wait until Sprint 010 is selected and its
+requirements, blueprint, acceptance criteria, handoff prompt, and
+`claude-start-prompt.md` are created by Architect before starting new
+implementation.

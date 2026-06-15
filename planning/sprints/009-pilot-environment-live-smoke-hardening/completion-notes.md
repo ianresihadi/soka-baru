@@ -1,7 +1,6 @@
 # Sprint 009 Completion Notes: Pilot Environment / Live Smoke Hardening
 
-Status: Implemented by Builder on branch `claude/sprint-009-live-smoke`. Ready for
-Architect review. PR not yet opened.
+Status: Merged and accepted via PR #8.
 
 ## Scripts added / changed
 

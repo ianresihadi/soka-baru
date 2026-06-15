@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is merged and accepted via PR #7. Sprint 009: Pilot Environment / Live Smoke Hardening is implemented by Builder on branch `claude/sprint-009-live-smoke` and ready for Architect review (PR not yet opened).
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is merged and accepted via PR #7. Sprint 009: Pilot Environment / Live Smoke Hardening is merged and accepted via PR #8.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Builder Layer: Sprint 009 Pilot Environment / Live Smoke Hardening is implemented on branch `claude/sprint-009-live-smoke` and awaiting Architect review. Ian approved the pre-edit plan with guardrails (guarded non-overwrite `.env` autoload; `check:env` fails on missing/placeholder; `smoke:live` manual cookie jar with `getSetCookie` fallback and classified failures; `validate` story documented for Windows/Corepack; no schema/module/auth changes). No PR opened yet.
+Architect Layer: Sprint 009 is accepted after PR #8 merge. There is no active Builder sprint. Next step is to run the live/pilot setup path locally or against a real Postgres database, then choose whether Sprint 010 should be Pengumuman, deployment/CI hardening, or another pilot-readiness slice.
 
 ## Sprint 009 Build Notes (Builder)
 
@@ -23,11 +23,11 @@ Builder Layer: Sprint 009 Pilot Environment / Live Smoke Hardening is implemente
 - No schema/migration, no new module, no auth bypass, no role/permission change, no provider lock-in. `.env` stays gitignored; no secrets committed.
 - Validation in this environment: `pnpm install` ok; `pnpm test` 110/110; `pnpm typecheck` clean; `pnpm --filter @soka/web build` ok; `pnpm validate` exit 0; `pnpm check:env` verified across missing/placeholder/real `.env` states; `pnpm smoke:live` blocked (no live Postgres/API here) but `node --check` passes and it fails gracefully with exit 2 and the "API not running" classification. Live smoke is documented for Ian to run against a real DB.
 
-## Next Actions (Sprint 009)
+## Architect Checkpoint After Sprint 009
 
-- Open the Sprint 009 PR to `main` and request Architect review (scripts small/safe, live smoke really verifies Better Auth cookies, docs executable, `pnpm validate` story clearer, 110 tests/typecheck/build green, no scope creep).
-- Optional live verification by Ian: set real `.env`, `pnpm check:env`, `pnpm db:migrate`, `pnpm db:seed`, `pnpm dev:api`, `pnpm smoke:live`, then walk `docs/PILOT_SMOKE_CHECKLIST.md`.
-- Do not start Sprint 010.
+- Architect accepted Sprint 009 after PR #8 merge. Re-review verified the `.env` loader strategy, dynamic auth import rationale, `check:env`, `smoke:live`, Windows-friendly setup docs, 110 API tests, typecheck, and web build.
+- SOKA now has a documented live/pilot rehearsal path: copy `.env`, activate pnpm through Corepack, validate env, migrate/seed, start API/web, run live smoke, then walk the manual admin/teacher/parent smoke checklist.
+- The full `pnpm smoke:live` pass still needs Ian's machine or a live Postgres/API; Builder and Architect environments did not have a live database/API running.
 
 ## Sprint 009 Handoff Notes (Architect)
 
@@ -269,11 +269,12 @@ Builder Layer: Sprint 009 Pilot Environment / Live Smoke Hardening is implemente
 
 ## Next Actions
 
-- Move to Claude with `planning/sprints/009-pilot-environment-live-smoke-hardening/claude-start-prompt.md`.
-- Ask Claude to read the required files and produce the pre-edit implementation plan only.
-- Bring Claude's plan back to Architect if it adds product modules, Pengumuman, push delivery, provider lock-in, auth bypasses, permission changes, role behavior changes, or schema changes not justified by live-smoke hardening.
-- Optional immediate manual verification remains useful: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` and walk `docs/PILOT_SMOKE_CHECKLIST.md` end-to-end.
+- Run the setup path in `docs/SETUP.md` on the local machine: enable Corepack, activate `pnpm@10.33.0`, copy `.env.example` to `.env`, and fill real secrets.
+- First target: make `pnpm check:env` pass with a real `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, and `WEB_ORIGIN`.
+- Then run `pnpm db:migrate`, `pnpm db:seed`, `pnpm dev:api`, `pnpm smoke:live`, `pnpm dev:web`, and walk `docs/PILOT_SMOKE_CHECKLIST.md`.
+- Do not move Claude to Sprint 010 until the live smoke path either passes or the blocker is documented here.
 
 ## Blockers
 
-- None blocking. Note: the full Better Auth HTTP sign-in/session flow was not exercised against a live Postgres in this environment (no `DATABASE_URL`); business logic is covered by in-process tests, and the live path is documented for verification. School-timezone handling is limited to cutoff comparison; a full timezone UI is intentionally deferred. Teacher account/membership creation remains internal/seed-driven; Sprint 008 only lets admin assign existing teacher-eligible memberships to classes.
+- Full live Better Auth HTTP smoke has not yet been proven on Ian's local/live environment. Sprint 009 added the tooling and docs; the remaining work is to run it with a real database/API.
+- If `corepack` is unavailable, install/fix Node.js first. If `pnpm check:env` fails, fix `.env` before migration or seed.

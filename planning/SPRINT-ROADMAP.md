@@ -34,7 +34,8 @@ Do not start implementation from Phase 2 modules, full TU/admin, payments, princ
 | 006 | Merged and accepted via PR #5. |
 | 007 | Merged and accepted via PR #6. |
 | 008 | Merged and accepted via PR #7. |
-| 009 | Requirements, blueprint, acceptance criteria, handoff prompt, Claude start prompt, and placeholder completion notes detailed; ready for Builder pre-edit implementation planning. |
+| 009 | Merged and accepted via PR #8. |
+| 010 | Not yet selected or detailed. |
 
 ## Initial Roadmap Completion
 
@@ -50,8 +51,8 @@ What now exists:
 
 What is still not proven:
 
-- Live Neon + Better Auth HTTP sign-in/session flow in a deployed-like environment.
-- Production environment setup, deployment, and CI smoke checks.
+- Full live smoke pass on Ian's machine or a real hosted environment.
+- Production deployment and CI smoke checks.
 - Browser/native push delivery.
 
 ## Candidate Next Tracks
