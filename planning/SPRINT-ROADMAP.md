@@ -14,6 +14,7 @@ Session 9 turns product decisions into buildable sprint order.
 | 006 | Nilai & Catatan | Build basic grades/KKM, qualitative student notes with publication status, and parent visibility. |
 | 007 | Pilot Readiness & App Shell | Consolidate the existing MVP slices into a coherent role-aware app shell, setup path, validation gate, and pilot smoke checklist. |
 | 008 | Admin Setup UI Hardening | Make existing onboarding APIs usable through a constrained setup surface for first-pilot operations. |
+| 009 | TBD | Choose next between live pilot/environment hardening and narrow Pengumuman. |
 
 ## Roadmap Principle
 
@@ -32,7 +33,8 @@ Do not start implementation from Phase 2 modules, full TU/admin, payments, princ
 | 005 | Merged and accepted via PR #4. |
 | 006 | Merged and accepted via PR #5. |
 | 007 | Merged and accepted via PR #6. |
-| 008 | Requirements, blueprint, acceptance criteria, handoff prompt, Claude start prompt, and placeholder completion notes detailed; ready for Builder pre-edit implementation planning. |
+| 008 | Merged and accepted via PR #7. |
+| 009 | Not yet selected or detailed. |
 
 ## Initial Roadmap Completion
 
@@ -50,8 +52,6 @@ What is still not proven:
 
 - Live Neon + Better Auth HTTP sign-in/session flow in a deployed-like environment.
 - Production environment setup, deployment, and CI smoke checks.
-- A polished role-aware app shell/navigation for teacher and parent workflows.
-- Practical admin setup UI for a real school operator.
 - Browser/native push delivery.
 
 ## Candidate Next Tracks
@@ -60,5 +60,6 @@ What is still not proven:
 |---|---|---|
 | 007 Pilot Readiness & App Shell | Selected | The core slices exist, but the app still needs to become usable, demoable, and deployable before adding more modules. |
 | 008 Admin Setup UI Hardening | Selected | Real schools need easier setup for students, classes, teachers, and parent links. Best after the shell/setup path is stable. |
-| 009 Pengumuman | Later | Useful parent trust feature, but less urgent than making setup and pilot operations reliable. |
+| 009 Pilot Environment / Live Smoke Hardening | Recommended default | Sprint 008 made setup usable; before adding product breadth, prove live Neon + Better Auth + seed + admin/teacher/parent smoke paths in a deployed-like environment. |
+| 009 Pengumuman | Alternative | Useful parent trust feature, but should wait unless the pilot school explicitly needs announcements before environment hardening. |
 | 009 Raport / Semester Finalization | Defer | Valuable, but would pull SOKA into heavier academic workflow before the MVP is pilot-hardened. |

@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is implemented by Builder and ready for Architect review (PR not merged).
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is merged and accepted via PR #7.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Builder Layer: Sprint 008 Admin Setup UI Hardening is implemented on branch `claude/sprint-008-admin-setup` and awaiting Architect review. The pre-edit plan was approved by Ian with Architect guardrails (admin-only workspace; only the narrow read-only `GET /admin/memberships` backend addition; no client `school_id`; no user/role creation, payments, documents, broadcast, push, principal analytics; parent visibility unchanged). No PR merged.
+Architect Layer: Sprint 008 is accepted after PR #7 merge. There is no active Builder sprint. Next step is to choose and detail Sprint 009 before Claude starts new implementation.
 
 ## Sprint 008 Build Notes (Builder)
 
@@ -20,14 +20,16 @@ Builder Layer: Sprint 008 Admin Setup UI Hardening is implemented on branch `cla
 - Seed: added `admin.a@example.com` (`admin_sekolah`, School A) via the internal binding path (idempotent, local-dev only) so the admin workspace is demoable.
 - Settings UI edits attendance cutoff, timezone, and **default KKM** (0–100 integer; invalid values rejected with clear errors and not persisted).
 - Tests: +7 for `GET /admin/memberships` (auth, admin guard, same-tenant isolation, role filtering, reject bad role, ignore client `schoolId`) and +3 for `defaultKkm` settings update (admin updates/persists; invalid rejected; non-admin forbidden). Total **110 passing** (onboarding 32, daily-loop 23; others unchanged).
-- Validation: `pnpm install` ok; `pnpm test` 107/107; `pnpm typecheck` clean; `pnpm --filter @soka/web build` ok; `pnpm validate` ok. Live DB/admin HTTP flow not exercised here (no `DATABASE_URL`); documented in SETUP + smoke checklist.
+- Architect review fixes applied before merge: `defaultKkm` is editable through the existing `PATCH /admin/school-settings`; `GET /admin/memberships` defaults to teacher-eligible memberships only (`guru`/`wali_kelas`) and does not expose parent-only or admin-only memberships.
+- Validation: Builder reported `pnpm install` ok; `pnpm test` 110/110; `pnpm typecheck` clean; `pnpm --filter @soka/web build` ok; `pnpm validate` ok. Architect re-review verified 110/110 API tests, typecheck, and web build using `corepack pnpm@10.33.0`; `pnpm validate` still fails in the Codex environment because nested `pnpm` is not on PATH, but its constituent commands pass. Live DB/admin HTTP flow not exercised here (no `DATABASE_URL`); documented in SETUP + smoke checklist.
 - Docs updated: `docs/API.md`, `docs/PERMISSIONS.md`, `docs/VALIDATION.md`, `docs/SETUP.md`, `docs/PILOT_SMOKE_CHECKLIST.md`, and Sprint 008 completion notes. `planning/DECISIONS.md` unchanged.
 
-## Next Actions (Sprint 008)
+## Architect Checkpoint After Sprint 008
 
-- Architect review of the Sprint 008 branch against the acceptance gate (admin-only workspace, no dead nav, tenant isolation incl. the new endpoint, parent visibility intact, passing validation, actionable docs, no scope creep).
-- Optional live verification: `pnpm db:migrate` + `pnpm db:seed`, then walk the admin setup path in `docs/PILOT_SMOKE_CHECKLIST.md` as `admin.a@example.com`.
-- Do not start Sprint 009 until Sprint 008 is accepted.
+- Architect accepted Sprint 008 after PR #7 merge. Re-review verified the default KKM edit flow, teacher-eligible-only membership selector endpoint, tenant isolation tests, 110 API tests, typecheck, and web build.
+- SOKA now has a usable MVP operations shell for three practical pilot roles: Admin/Setup, Guru/Wali Kelas, and Orang Tua.
+- The biggest remaining pilot gap is live environment proof: Neon database configuration, Better Auth HTTP session flow, migrate/seed rehearsal, and an end-to-end pilot smoke walk using the documented demo accounts.
+- Recommended next direction: choose between a **Sprint 009 Pilot Environment / Live Smoke Hardening** sprint before adding product breadth, or a narrow **Sprint 009 Pengumuman** sprint if the pilot school needs announcements for trust/adoption.
 
 ## Recently Completed
 
@@ -244,11 +246,11 @@ Builder Layer: Sprint 008 Admin Setup UI Hardening is implemented on branch `cla
 
 ## Next Actions
 
-- Move to Claude with `planning/sprints/008-admin-setup-ui-hardening/claude-start-prompt.md`.
-- Ask Claude to read the required files and produce the pre-edit implementation plan only.
-- Bring Claude's plan back to Architect if it adds full TU/user-management scope, changes auth/tenancy/permissions, changes parent visibility, or expands beyond setup hardening.
-- Optional live verification remains useful: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` and walk `docs/PILOT_SMOKE_CHECKLIST.md` end-to-end.
+- Decide Sprint 009 direction before moving Claude again.
+- Recommended default: detail Sprint 009 as Pilot Environment / Live Smoke Hardening, focused on proving Neon + Better Auth + seed + documented admin/teacher/parent smoke paths in a deployed-like setup.
+- Alternative: detail Sprint 009 as Pengumuman only if the pilot sales/use-case requires school/class announcements before environment hardening.
+- Optional immediate manual verification remains useful: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` and walk `docs/PILOT_SMOKE_CHECKLIST.md` end-to-end.
 
 ## Blockers
 
-- None blocking. Note: the full Better Auth HTTP sign-in/session flow was not exercised against a live Postgres in this environment (no `DATABASE_URL`); business logic is covered by in-process tests, and the live path is documented for verification. School-timezone handling is limited to cutoff comparison; a full timezone UI is intentionally deferred. Teacher account/membership creation still has no admin UI (internal/seed binding); Sprint 004 assigns existing teacher memberships to classes only.
+- None blocking. Note: the full Better Auth HTTP sign-in/session flow was not exercised against a live Postgres in this environment (no `DATABASE_URL`); business logic is covered by in-process tests, and the live path is documented for verification. School-timezone handling is limited to cutoff comparison; a full timezone UI is intentionally deferred. Teacher account/membership creation remains internal/seed-driven; Sprint 008 only lets admin assign existing teacher-eligible memberships to classes.
