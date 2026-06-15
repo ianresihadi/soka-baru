@@ -5,13 +5,28 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is merged and accepted via PR #7. Sprint 009: Pilot Environment / Live Smoke Hardening is merged and accepted via PR #8. Sprint 010: Pilot UX & Visual Productization is detailed and ready for Builder pre-edit implementation planning.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is merged and accepted via PR #7. Sprint 009: Pilot Environment / Live Smoke Hardening is merged and accepted via PR #8. Sprint 010: Pilot UX & Visual Productization is implemented by Builder on branch `claude/sprint-010-pilot-ux` and ready for Architect review (PR not yet opened).
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Architect Layer: Sprint 010 Pilot UX & Visual Productization has approved planning artifacts. Next step is to move to Claude for a pre-edit implementation plan only, then return to Architect if the plan adds modules, backend schema, auth/role changes, deployment work, or weakens tenant/parent boundaries.
+Builder Layer: Sprint 010 Pilot UX & Visual Productization is implemented on branch `claude/sprint-010-pilot-ux` and awaiting Architect review. Ian approved the pre-edit plan (token/primitive refactor of the listed web components + a small idempotent seed enrichment). No backend route/schema/auth/role/tenant/parent-visibility change. No PR opened yet.
+
+## Sprint 010 Build Notes (Builder)
+
+- Added a lightweight SOKA visual system in `apps/web`: Tailwind `brand` tokens + warm-neutral base styles (`tailwind.config.js`, `src/index.css`); shared primitives `src/components/ui.tsx` (Button, Card, SectionHeader, Badge, Notice, Input, Select, Field, EmptyState, Loading, NavChips) and raw-enum→label/tone maps `src/components/status.ts`.
+- Refactored all listed surfaces to use the system: `App` (loading), `AppShell` (polished header, school + active-workspace badge, mobile second line, sign-out unchanged from Sprint 007), `LoginPanel`, `RoleSwitcher` (renders only available workspaces), `TeacherWorkspace`/`PapanPagi` (numbered Papan Pagi order preserved, progress bar, tone-coloured attendance buttons with "Tersimpan" badges, friendly save states), `TeacherGradesNotes` (KKM/visibility badges, subordinate to the loop), `ParentWorkspace`/`ParentHome` (reassurance-first summary, calm cards, published-only preserved), `AdminSetupWorkspace` (overview counts + setup checklist, guided sections, editable cutoff/timezone/KKM).
+- Seed enrichment (`packages/db/src/seed.ts`): idempotent demo content for the existing School A child Adinda Putri — one attendance record, one published grade, one published note, one parent→teacher message — via existing tested service functions. No schema/migration, no mock layer, local-dev only.
+- Behavior preserved: Papan Pagi order; parent published-only visibility; sign-out clears local state only after server success; no client `school_id`; admin workspace admin-only; no dead nav.
+- Validation: `pnpm install` ok; `pnpm test` 110/110; `pnpm typecheck` clean; `pnpm --filter @soka/web build` ok; `pnpm validate` exit 0. Visual QA via `vite preview` + Playwright screenshots with mocked API: login, teacher, parent, admin at desktop (1366×768) and mobile (390×844) — no overflow/overlap/dead-nav. Live end-to-end walkthrough still needs `pnpm dev:api`/`dev:web` against a seeded DB.
+- Docs updated: `docs/UX_VISUAL_STANDARD.md` (concrete frontend conventions), `docs/PILOT_SMOKE_CHECKLIST.md` (visual walkthrough), `docs/VALIDATION.md` (Sprint 010 results). `planning/DECISIONS.md` unchanged.
+
+## Next Actions (Sprint 010)
+
+- Open the Sprint 010 PR to `main` and request Architect review (credible pilot feel; teacher task-first; parent reassurance-first/mobile; admin guided not full-TU; permissions/visibility intact; validation + visual QA documented).
+- Optional live check by Ian: seed, start API/web, walk `docs/PILOT_SMOKE_CHECKLIST.md` incl. the Visual walkthrough.
+- Do not start Sprint 011 until Sprint 010 is accepted.
 
 ## Sprint 009 Build Notes (Builder)
 

@@ -1,11 +1,21 @@
 import { and, eq } from "drizzle-orm";
-import { bindUserToSchoolByCode } from "./repositories";
+import { bindUserToSchoolByCode, getActiveTenantContext } from "./repositories";
 import { getDb, getPool } from "./client";
 import { loadEnv } from "./loadEnv";
+import { submitClassAttendance, createParentMessage } from "./dailyLoop";
+import {
+  createGrade,
+  publishGrade,
+  createStudentNote,
+  publishStudentNote,
+} from "./academicRecords";
 import {
   classes,
+  grades,
+  messages,
   parentStudentLinks,
   schools,
+  studentNotes,
   students,
   teacherAssignments,
   user,
@@ -114,6 +124,88 @@ async function ensureParentLink(
     .onConflictDoNothing();
 }
 
+/**
+ * Idempotent demo content for the seeded School A child. Each piece is guarded
+ * by an existence check so re-running the seed does not duplicate rows. All
+ * writes go through the same tenant-scoped service functions the app uses.
+ */
+async function ensureDemoContent(
+  schoolId: string,
+  classId: string,
+  studentId: string,
+  teacherUserId: string,
+  parentUserId: string,
+) {
+  const db = getDb();
+  const teacherCtx = await getActiveTenantContext(db, teacherUserId);
+  if (!teacherCtx) return;
+  const today = new Date().toISOString().slice(0, 10);
+
+  // 1. Attendance for today (upsert is naturally idempotent).
+  await submitClassAttendance(db, teacherCtx, classId, today, {
+    records: [{ studentId, status: "hadir" }],
+  });
+
+  // 2. One published grade (skip if this assessment already exists).
+  const subject = "Matematika";
+  const assessmentName = "Ulangan Harian 1";
+  const existingGrade = await db
+    .select({ id: grades.id })
+    .from(grades)
+    .where(
+      and(
+        eq(grades.schoolId, schoolId),
+        eq(grades.studentId, studentId),
+        eq(grades.subject, subject),
+        eq(grades.assessmentName, assessmentName),
+      ),
+    );
+  if (!existingGrade[0]) {
+    const created = await createGrade(db, teacherCtx, classId, {
+      studentId,
+      subject,
+      assessmentName,
+      assessmentDate: today,
+      score: 85,
+      maxScore: 100,
+    });
+    if (created.ok) await publishGrade(db, teacherCtx, created.grade.id);
+  }
+
+  // 3. One published note (skip if an identical note body already exists).
+  const noteBody = "Aktif bertanya di kelas dan rajin mengerjakan tugas.";
+  const existingNote = await db
+    .select({ id: studentNotes.id })
+    .from(studentNotes)
+    .where(
+      and(
+        eq(studentNotes.schoolId, schoolId),
+        eq(studentNotes.studentId, studentId),
+        eq(studentNotes.body, noteBody),
+      ),
+    );
+  if (!existingNote[0]) {
+    const created = await createStudentNote(db, teacherCtx, classId, {
+      studentId,
+      category: "academic",
+      body: noteBody,
+    });
+    if (created.ok) await publishStudentNote(db, teacherCtx, created.note.id);
+  }
+
+  // 4. One parent→teacher message (skip if the child already has any message).
+  const existingMessage = await db
+    .select({ id: messages.id })
+    .from(messages)
+    .where(eq(messages.studentId, studentId));
+  if (!existingMessage[0]) {
+    await createParentMessage(db, parentUserId, {
+      studentId,
+      body: "Selamat pagi, Bu/Pak. Terima kasih atas perhatiannya untuk Adinda.",
+    });
+  }
+}
+
 async function main() {
   const schoolA = await ensureSchool("SOKA-A", "SD Soka Alpha");
   await ensureSchool("SOKA-B", "SD Soka Beta");
@@ -153,6 +245,12 @@ async function main() {
 
     // multi@example.com is the parent of Adinda Putri (server-controlled link).
     await ensureParentLink(schoolA.id, anak.id, bindMulti.membershipId, "orang_tua");
+
+    // Small, idempotent demo content so the pilot walkthrough is not empty:
+    // one attendance record, one published grade, one published note, and one
+    // parent→teacher message for Adinda Putri. Uses the same tested service
+    // paths as the app — no mock layer, no schema change.
+    await ensureDemoContent(schoolA.id, kelas.id, anak.id, userA, userMulti);
   }
 
   await getPool().end();

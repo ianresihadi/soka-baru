@@ -1,10 +1,5 @@
 import type { Workspace } from "./api";
-
-const LABELS: Record<Workspace, string> = {
-  teacher: "Guru",
-  parent: "Orang Tua",
-  admin: "Admin / Setup",
-};
+import { WORKSPACE_LABEL } from "./components/status";
 
 /**
  * Context switcher shown only when the signed-in user has more than one
@@ -20,22 +15,23 @@ export function RoleSwitcher({
   onChange: (next: Workspace) => void;
 }) {
   return (
-    <div className="inline-flex rounded-lg border border-slate-300 bg-white p-0.5 text-sm">
+    <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-sm">
       {available.map((key) => (
         <button
           key={key}
           type="button"
           aria-pressed={value === key}
-          className={`rounded-md px-3 py-1 font-medium ${
+          className={`rounded-md px-3 py-1 font-medium transition-colors ${
             value === key
-              ? "bg-slate-800 text-white"
-              : "text-slate-600 hover:text-slate-800"
+              ? "bg-white text-brand-700 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
           }`}
           onClick={() => onChange(key)}
         >
-          {LABELS[key]}
+          {WORKSPACE_LABEL[key]}
         </button>
       ))}
     </div>
   );
 }
+

@@ -20,6 +20,20 @@ import {
   type SchoolSettings,
   type TeacherMembership,
 } from "./adminSetupApi";
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  Input,
+  Loading,
+  NavChips,
+  Notice,
+  SectionHeader,
+  Select,
+} from "./components/ui";
+import { linkCodeStatus, type Tone } from "./components/status";
 
 const NAV = [
   { href: "#setup-overview", label: "Ringkasan" },
@@ -40,10 +54,10 @@ const ERROR_COPY: Record<string, string> = {
 };
 const friendly = (code: string) => ERROR_COPY[code] ?? `Gagal (${code}).`;
 
-type Notice = { kind: "ok" | "err"; text: string } | null;
+type Notice = { tone: Tone; text: string } | null;
 
 /**
- * Admin / Setup workspace. A compact, operational wrapper over the existing
+ * Admin / Setup workspace. A compact, guided wrapper over the existing
  * tenant-scoped onboarding APIs. Admin-only (gated by AppShell + backend
  * `/admin/*` guards). Never sends `school_id`.
  */
@@ -105,200 +119,191 @@ export function AdminSetupWorkspace({
     setNotice(null);
     const r = await action();
     if (r.ok) {
-      setNotice({ kind: "ok", text: okText });
+      setNotice({ tone: "success", text: okText });
       after();
       return true;
     }
-    setNotice({ kind: "err", text: friendly(r.error) });
+    setNotice({ tone: "danger", text: friendly(r.error) });
     return false;
   }
 
+  const classCount = classes?.length ?? 0;
+  const studentCount = students?.length ?? 0;
+  const codeCount = codes?.length ?? 0;
+  const anyAssigned = (students ?? []).some((s) => s.classId);
+
+  const checklist = [
+    { label: "Buat kelas", done: classCount > 0 },
+    { label: "Tambah siswa", done: studentCount > 0 },
+    { label: "Tempatkan siswa di kelas", done: anyAssigned },
+    { label: "Buat kode tautan orang tua", done: codeCount > 0 },
+  ];
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-4">
-      <nav className="mb-3 flex flex-wrap gap-2">
-        {NAV.map((n) => (
-          <a
-            key={n.href}
-            href={n.href}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 hover:border-slate-400 hover:text-slate-800"
-          >
-            {n.label}
-          </a>
-        ))}
-      </nav>
+    <div className="mx-auto max-w-4xl px-4 py-4">
+      <div className="sticky top-[3.25rem] z-[5] -mx-4 mb-3 border-b border-slate-100 bg-stone-50/95 px-4 py-2 backdrop-blur sm:top-[3.5rem]">
+        <NavChips items={NAV} />
+      </div>
 
       {notice && (
-        <div
-          className={`mb-3 rounded-lg px-3 py-2 text-sm ${
-            notice.kind === "ok"
-              ? "bg-green-50 text-green-700"
-              : "bg-red-50 text-red-700"
-          }`}
-        >
+        <Notice tone={notice.tone} className="mb-3">
           {notice.text}
-        </div>
+        </Notice>
       )}
 
-      {/* 1. Overview */}
-      <section id="setup-overview" className="scroll-mt-20 rounded-xl border bg-white p-4">
-        <h2 className="text-base font-semibold text-slate-800">Admin / Setup</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Sekolah aktif: <strong>{schoolName ?? "—"}</strong>
-          {schoolCode ? ` (${schoolCode})` : ""}
-        </p>
-        <p className="mt-2 text-xs text-slate-500">
-          {(classes?.length ?? 0)} kelas · {(students?.length ?? 0)} siswa ·{" "}
-          {(codes?.length ?? 0)} kode tautan
-        </p>
-      </section>
+      <div className="space-y-4">
+        {/* 1. Overview */}
+        <Card id="setup-overview">
+          <SectionHeader
+            title="Admin / Setup"
+            description={`Sekolah aktif: ${schoolName ?? "—"}${schoolCode ? ` (${schoolCode})` : ""}`}
+          />
+          <div className="grid grid-cols-3 gap-2">
+            <Stat label="Kelas" value={classCount} />
+            <Stat label="Siswa" value={studentCount} />
+            <Stat label="Kode tautan" value={codeCount} />
+          </div>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {checklist.map((c) => (
+              <Badge key={c.label} tone={c.done ? "success" : "neutral"}>
+                {c.done ? "✓" : "○"} {c.label}
+              </Badge>
+            ))}
+          </div>
+        </Card>
 
-      {/* 2. Classes */}
-      <Section id="setup-classes" title="Kelas">
-        <List
-          empty="Belum ada kelas."
-          loading={classes === null}
-          rows={(classes ?? []).map((c) => (
-            <li key={c.id} className="flex justify-between border-t py-1">
-              <span>{c.name}</span>
-              <span className="text-xs text-slate-500">
-                {[c.gradeLevel, c.academicYear].filter(Boolean).join(" · ") || "—"}
-              </span>
-            </li>
-          ))}
-        />
-        <ClassForm
-          onCreate={(input) =>
-            run(() => createClass(input), "Kelas dibuat.", refreshClasses)
-          }
-        />
-      </Section>
-
-      {/* 3. Students */}
-      <Section id="setup-students" title="Siswa">
-        <List
-          empty="Belum ada siswa."
-          loading={students === null}
-          rows={(students ?? []).map((s) => (
-            <li key={s.id} className="flex justify-between border-t py-1">
-              <span>{s.fullName}</span>
-              <span className="text-xs text-slate-500">
-                {s.classId ? (classNameById.get(s.classId) ?? "kelas lain") : "belum ada kelas"}
-              </span>
-            </li>
-          ))}
-        />
-        <StudentForms
-          classes={classes ?? []}
-          students={students ?? []}
-          onCreate={(input) =>
-            run(() => createStudent(input), "Siswa dibuat.", refreshStudents)
-          }
-          onBulk={(names) =>
-            run(() => bulkStudents(names), `${names.length} siswa ditambahkan.`, refreshStudents)
-          }
-          onAssign={(studentId, classId) =>
-            run(
-              () => assignStudentClass(studentId, classId),
-              "Siswa dipindahkan ke kelas.",
-              refreshStudents,
-            )
-          }
-        />
-      </Section>
-
-      {/* 4. Teacher assignment */}
-      <Section id="setup-teachers" title="Penugasan Guru">
-        <p className="text-xs text-slate-500">
-          Pilih guru/wali kelas yang sudah punya akun di sekolah ini. Sprint ini
-          tidak membuat akun atau peran baru.
-        </p>
-        <TeacherForm
-          classes={classes ?? []}
-          teachers={teachers ?? []}
-          onAssign={(classId, input) =>
-            run(() => assignTeacher(classId, input), "Guru ditugaskan ke kelas.")
-          }
-        />
-      </Section>
-
-      {/* 5. Parent link codes */}
-      <Section id="setup-codes" title="Kode Tautan Orang Tua">
-        <List
-          empty="Belum ada kode."
-          loading={codes === null}
-          rows={(codes ?? []).map((c) => (
-            <li key={c.id} className="flex items-center justify-between gap-2 border-t py-1">
-              <span>
-                <code className="rounded bg-slate-100 px-1">{c.code}</code>{" "}
+        {/* 2. Classes */}
+        <Card id="setup-classes">
+          <SectionHeader title="Kelas" />
+          <List
+            loading={classes === null}
+            empty="Belum ada kelas."
+            rows={(classes ?? []).map((c) => (
+              <li key={c.id} className="flex items-center justify-between py-1.5">
+                <span className="text-sm font-medium text-slate-700">{c.name}</span>
                 <span className="text-xs text-slate-500">
-                  [{c.status}] · {students?.find((s) => s.id === c.studentId)?.fullName ?? c.studentId.slice(0, 8)}
+                  {[c.gradeLevel, c.academicYear].filter(Boolean).join(" · ") || "—"}
                 </span>
-              </span>
-              <span className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="rounded bg-slate-100 px-2 py-0.5 text-xs"
-                  onClick={() => void navigator.clipboard?.writeText(c.code)}
-                >
-                  Salin
-                </button>
-                {c.status === "active" && (
-                  <button
-                    type="button"
-                    className="rounded border border-red-300 px-2 py-0.5 text-xs text-red-700"
-                    onClick={() => {
-                      if (confirm(`Cabut kode ${c.code}?`))
-                        void run(() => revokeLinkCode(c.id), "Kode dicabut.", refreshCodes);
-                    }}
-                  >
-                    Cabut
-                  </button>
-                )}
-              </span>
-            </li>
-          ))}
-        />
-        <CodeForm
-          students={students ?? []}
-          onGenerate={(studentId) =>
-            run(() => createLinkCode(studentId), "Kode dibuat.", refreshCodes)
-          }
-        />
-      </Section>
+              </li>
+            ))}
+          />
+          <ClassForm onCreate={(input) => run(() => createClass(input), "Kelas dibuat.", refreshClasses)} />
+        </Card>
 
-      {/* 6. School settings */}
-      <Section id="setup-settings" title="Pengaturan Sekolah">
-        {settings === null ? (
-          <p className="text-sm text-slate-500">Memuat…</p>
-        ) : (
-          <SettingsForm
-            settings={settings}
-            onSave={(input) =>
-              run(() => updateSettings(input), "Pengaturan disimpan.", refreshSettings)
+        {/* 3. Students */}
+        <Card id="setup-students">
+          <SectionHeader title="Siswa" />
+          <List
+            loading={students === null}
+            empty="Belum ada siswa."
+            rows={(students ?? []).map((s) => (
+              <li key={s.id} className="flex items-center justify-between py-1.5">
+                <span className="text-sm font-medium text-slate-700">{s.fullName}</span>
+                {s.classId ? (
+                  <Badge tone="brand">{classNameById.get(s.classId) ?? "kelas lain"}</Badge>
+                ) : (
+                  <Badge tone="neutral">belum ada kelas</Badge>
+                )}
+              </li>
+            ))}
+          />
+          <StudentForms
+            classes={classes ?? []}
+            students={students ?? []}
+            onCreate={(input) => run(() => createStudent(input), "Siswa dibuat.", refreshStudents)}
+            onBulk={(names) =>
+              run(() => bulkStudents(names), `${names.length} siswa ditambahkan.`, refreshStudents)
+            }
+            onAssign={(studentId, classId) =>
+              run(() => assignStudentClass(studentId, classId), "Siswa dipindahkan ke kelas.", refreshStudents)
             }
           />
-        )}
-      </Section>
+        </Card>
+
+        {/* 4. Teacher assignment */}
+        <Card id="setup-teachers">
+          <SectionHeader
+            title="Penugasan Guru"
+            description="Pilih guru/wali kelas yang sudah punya akun di sekolah ini. Setup ini tidak membuat akun atau peran baru."
+          />
+          <TeacherForm
+            classes={classes ?? []}
+            teachers={teachers ?? []}
+            onAssign={(classId, input) => run(() => assignTeacher(classId, input), "Guru ditugaskan ke kelas.")}
+          />
+        </Card>
+
+        {/* 5. Parent link codes */}
+        <Card id="setup-codes">
+          <SectionHeader title="Kode Tautan Orang Tua" description="Hanya kode terbitan sekolah; tidak ada klaim bebas." />
+          <List
+            loading={codes === null}
+            empty="Belum ada kode."
+            rows={(codes ?? []).map((c) => {
+              const st = linkCodeStatus(c.status);
+              return (
+                <li key={c.id} className="flex items-center justify-between gap-2 py-1.5">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-sm text-slate-800">
+                      {c.code}
+                    </code>
+                    <Badge tone={st.tone}>{st.label}</Badge>
+                    <span className="truncate text-xs text-slate-500">
+                      {students?.find((s) => s.id === c.studentId)?.fullName ?? c.studentId.slice(0, 8)}
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    <Button variant="ghost" size="sm" onClick={() => void navigator.clipboard?.writeText(c.code)}>
+                      Salin
+                    </Button>
+                    {c.status === "active" && (
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm(`Cabut kode ${c.code}?`))
+                            void run(() => revokeLinkCode(c.id), "Kode dicabut.", refreshCodes);
+                        }}
+                      >
+                        Cabut
+                      </Button>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+          />
+          <CodeForm
+            students={students ?? []}
+            onGenerate={(studentId) => run(() => createLinkCode(studentId), "Kode dibuat.", refreshCodes)}
+          />
+        </Card>
+
+        {/* 6. School settings */}
+        <Card id="setup-settings">
+          <SectionHeader title="Pengaturan Sekolah" />
+          {settings === null ? (
+            <Loading />
+          ) : (
+            <SettingsForm
+              settings={settings}
+              onSave={(input) => run(() => updateSettings(input), "Pengaturan disimpan.", refreshSettings)}
+            />
+          )}
+        </Card>
+      </div>
     </div>
   );
 }
 
 // --- Small presentational helpers ------------------------------------------
 
-function Section({
-  id,
-  title,
-  children,
-}: {
-  id: string;
-  title: string;
-  children: React.ReactNode;
-}) {
+function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <section id={id} className="scroll-mt-20 mt-4 rounded-xl border bg-white p-4">
-      <h3 className="font-medium text-slate-800">{title}</h3>
-      <div className="mt-2 space-y-3">{children}</div>
-    </section>
+    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+      <p className="text-xl font-semibold text-slate-800">{value}</p>
+      <p className="text-xs text-slate-500">{label}</p>
+    </div>
   );
 }
 
@@ -311,13 +316,10 @@ function List({
   empty: string;
   loading: boolean;
 }) {
-  if (loading) return <p className="text-sm text-slate-500">Memuat…</p>;
-  if (rows.length === 0) return <p className="text-sm text-slate-500">{empty}</p>;
-  return <ul className="text-sm">{rows}</ul>;
+  if (loading) return <Loading />;
+  if (rows.length === 0) return <EmptyState title={empty} />;
+  return <ul className="mb-3 divide-y divide-slate-100">{rows}</ul>;
 }
-
-const input = "rounded border border-slate-300 px-2 py-1 text-sm";
-const btn = "rounded bg-slate-800 px-3 py-1 text-sm font-medium text-white hover:bg-slate-700";
 
 function ClassForm({
   onCreate,
@@ -328,13 +330,11 @@ function ClassForm({
   const [gradeLevel, setGrade] = useState("");
   const [academicYear, setYear] = useState("");
   return (
-    <div className="flex flex-wrap items-end gap-2">
-      <input className={input} placeholder="Nama kelas" value={name} onChange={(e) => setName(e.target.value)} />
-      <input className={`${input} w-24`} placeholder="Tingkat" value={gradeLevel} onChange={(e) => setGrade(e.target.value)} />
-      <input className={`${input} w-28`} placeholder="Tahun ajaran" value={academicYear} onChange={(e) => setYear(e.target.value)} />
-      <button
-        type="button"
-        className={btn}
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <Input className="col-span-2 sm:col-span-1" placeholder="Nama kelas" value={name} onChange={(e) => setName(e.target.value)} />
+      <Input placeholder="Tingkat" value={gradeLevel} onChange={(e) => setGrade(e.target.value)} />
+      <Input placeholder="Tahun ajaran" value={academicYear} onChange={(e) => setYear(e.target.value)} />
+      <Button
         disabled={!name.trim()}
         onClick={async () => {
           const ok = await onCreate({
@@ -342,11 +342,15 @@ function ClassForm({
             gradeLevel: gradeLevel.trim() || undefined,
             academicYear: academicYear.trim() || undefined,
           });
-          if (ok) { setName(""); setGrade(""); setYear(""); }
+          if (ok) {
+            setName("");
+            setGrade("");
+            setYear("");
+          }
         }}
       >
         Tambah kelas
-      </button>
+      </Button>
     </div>
   );
 }
@@ -372,17 +376,17 @@ function StudentForms({
   const [assignClass, setAssignClass] = useState("");
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-end gap-2">
-        <input className={input} placeholder="Nama siswa" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-        <input className={`${input} w-28`} placeholder="NISN (opsional)" value={nisn} onChange={(e) => setNisn(e.target.value)} />
-        <select className={input} value={classId} onChange={(e) => setClassId(e.target.value)}>
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Input className="col-span-2 sm:col-span-1" placeholder="Nama siswa" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        <Input placeholder="NISN (opsional)" value={nisn} onChange={(e) => setNisn(e.target.value)} />
+        <Select value={classId} onChange={(e) => setClassId(e.target.value)}>
           <option value="">Tanpa kelas</option>
-          {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <button
-          type="button"
-          className={btn}
+          {classes.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </Select>
+        <Button
           disabled={!fullName.trim()}
           onClick={async () => {
             const ok = await onCreate({
@@ -390,53 +394,58 @@ function StudentForms({
               nisn: nisn.trim() || undefined,
               classId: classId || undefined,
             });
-            if (ok) { setFullName(""); setNisn(""); setClassId(""); }
+            if (ok) {
+              setFullName("");
+              setNisn("");
+              setClassId("");
+            }
           }}
         >
           Tambah siswa
-        </button>
+        </Button>
       </div>
 
-      <div>
-        <label className="text-xs text-slate-500">Tambah banyak (satu nama per baris)</label>
+      <Field label="Tambah banyak (satu nama per baris)">
         <textarea
-          className={`${input} mt-1 w-full`}
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-brand-400"
           rows={3}
           placeholder={"Adinda Putri\nBagas Pratama"}
           value={bulk}
           onChange={(e) => setBulk(e.target.value)}
         />
-        <button
-          type="button"
-          className={`${btn} mt-1`}
-          onClick={async () => {
-            const names = bulk.split("\n").map((l) => l.trim()).filter(Boolean);
-            if (names.length === 0) return;
-            const ok = await onBulk(names);
-            if (ok) setBulk("");
-          }}
-        >
-          Tambah daftar
-        </button>
-      </div>
+      </Field>
+      <Button
+        variant="secondary"
+        onClick={async () => {
+          const names = bulk.split("\n").map((l) => l.trim()).filter(Boolean);
+          if (names.length === 0) return;
+          const ok = await onBulk(names);
+          if (ok) setBulk("");
+        }}
+      >
+        Tambah daftar
+      </Button>
 
-      <div className="flex flex-wrap items-end gap-2">
-        <select className={input} value={assignStudent} onChange={(e) => setAssignStudent(e.target.value)}>
+      <div className="grid grid-cols-1 gap-2 border-t border-slate-100 pt-3 sm:grid-cols-3">
+        <Select value={assignStudent} onChange={(e) => setAssignStudent(e.target.value)}>
           <option value="">Pilih siswa…</option>
-          {students.map((s) => <option key={s.id} value={s.id}>{s.fullName}</option>)}
-        </select>
-        <select className={input} value={assignClass} onChange={(e) => setAssignClass(e.target.value)}>
+          {students.map((s) => (
+            <option key={s.id} value={s.id}>{s.fullName}</option>
+          ))}
+        </Select>
+        <Select value={assignClass} onChange={(e) => setAssignClass(e.target.value)}>
           <option value="">Pilih kelas…</option>
-          {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <button
-          type="button"
-          className={btn}
+          {classes.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </Select>
+        <Button
+          variant="secondary"
           disabled={!assignStudent || !assignClass}
           onClick={() => void onAssign(assignStudent, assignClass)}
         >
           Pindahkan ke kelas
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -459,34 +468,39 @@ function TeacherForm({
   const [roleInClass, setRole] = useState<"wali_kelas" | "guru">("wali_kelas");
   const [subject, setSubject] = useState("");
 
-  const eligible = teachers.filter((t) =>
-    t.roles.some((r) => r === "guru" || r === "wali_kelas"),
-  );
+  const eligible = teachers.filter((t) => t.roles.some((r) => r === "guru" || r === "wali_kelas"));
+
+  if (eligible.length === 0) {
+    return <EmptyState title="Belum ada akun guru/wali kelas di sekolah ini." />;
+  }
 
   return (
-    <div className="flex flex-wrap items-end gap-2">
-      <select className={input} value={classId} onChange={(e) => setClassId(e.target.value)}>
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <Select value={classId} onChange={(e) => setClassId(e.target.value)}>
         <option value="">Pilih kelas…</option>
-        {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-      </select>
-      <select className={input} value={membershipId} onChange={(e) => setMembershipId(e.target.value)}>
+        {classes.map((c) => (
+          <option key={c.id} value={c.id}>{c.name}</option>
+        ))}
+      </Select>
+      <Select value={membershipId} onChange={(e) => setMembershipId(e.target.value)}>
         <option value="">Pilih guru…</option>
         {eligible.map((t) => (
           <option key={t.membershipId} value={t.membershipId}>
             {t.name} ({t.email})
           </option>
         ))}
-      </select>
-      <select className={input} value={roleInClass} onChange={(e) => setRole(e.target.value as "wali_kelas" | "guru")}>
+      </Select>
+      <Select value={roleInClass} onChange={(e) => setRole(e.target.value as "wali_kelas" | "guru")}>
         <option value="wali_kelas">Wali kelas</option>
         <option value="guru">Guru</option>
-      </select>
-      {roleInClass === "guru" && (
-        <input className={`${input} w-28`} placeholder="Mapel (opsional)" value={subject} onChange={(e) => setSubject(e.target.value)} />
+      </Select>
+      {roleInClass === "guru" ? (
+        <Input placeholder="Mapel (opsional)" value={subject} onChange={(e) => setSubject(e.target.value)} />
+      ) : (
+        <span className="hidden sm:block" />
       )}
-      <button
-        type="button"
-        className={btn}
+      <Button
+        className="sm:col-span-2"
         disabled={!classId || !membershipId}
         onClick={async () => {
           const ok = await onAssign(classId, {
@@ -494,14 +508,14 @@ function TeacherForm({
             roleInClass,
             subject: roleInClass === "guru" && subject.trim() ? subject.trim() : undefined,
           });
-          if (ok) { setMembershipId(""); setSubject(""); }
+          if (ok) {
+            setMembershipId("");
+            setSubject("");
+          }
         }}
       >
         Tugaskan
-      </button>
-      {eligible.length === 0 && (
-        <span className="text-xs text-slate-500">Belum ada akun guru/wali kelas di sekolah ini.</span>
-      )}
+      </Button>
     </div>
   );
 }
@@ -515,14 +529,14 @@ function CodeForm({
 }) {
   const [studentId, setStudentId] = useState("");
   return (
-    <div className="flex flex-wrap items-end gap-2">
-      <select className={input} value={studentId} onChange={(e) => setStudentId(e.target.value)}>
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <Select value={studentId} onChange={(e) => setStudentId(e.target.value)}>
         <option value="">Pilih siswa…</option>
-        {students.map((s) => <option key={s.id} value={s.id}>{s.fullName}</option>)}
-      </select>
-      <button
-        type="button"
-        className={btn}
+        {students.map((s) => (
+          <option key={s.id} value={s.id}>{s.fullName}</option>
+        ))}
+      </Select>
+      <Button
         disabled={!studentId}
         onClick={async () => {
           const ok = await onGenerate(studentId);
@@ -530,7 +544,7 @@ function CodeForm({
         }}
       >
         Buat kode
-      </button>
+      </Button>
     </div>
   );
 }
@@ -558,44 +572,26 @@ function SettingsForm({
       setLocalError("KKM default harus bilangan bulat 0–100.");
       return;
     }
-    void onSave({
-      attendanceCutoffTime: cutoff.trim(),
-      schoolTimezone: tz.trim(),
-      defaultKkm: kkmNum,
-    });
+    void onSave({ attendanceCutoffTime: cutoff.trim(), schoolTimezone: tz.trim(), defaultKkm: kkmNum });
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-end gap-2">
-        <label className="text-sm text-slate-700">
-          Cutoff absensi
-          <input className={`${input} ml-2`} placeholder="HH:mm" value={cutoff} onChange={(e) => setCutoff(e.target.value)} />
-        </label>
-        <label className="text-sm text-slate-700">
-          Zona waktu
-          <input className={`${input} ml-2`} placeholder="Asia/Jakarta" value={tz} onChange={(e) => setTz(e.target.value)} />
-        </label>
-        <label className="text-sm text-slate-700">
-          KKM default
-          <input
-            className={`${input} ml-2 w-20`}
-            type="number"
-            min={0}
-            max={100}
-            placeholder="0–100"
-            value={kkm}
-            onChange={(e) => setKkm(e.target.value)}
-          />
-        </label>
-        <button type="button" className={btn} onClick={save}>
-          Simpan
-        </button>
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Field label="Cutoff absensi" hint="Format HH:mm">
+          <Input placeholder="07:30" value={cutoff} onChange={(e) => setCutoff(e.target.value)} />
+        </Field>
+        <Field label="Zona waktu">
+          <Input placeholder="Asia/Jakarta" value={tz} onChange={(e) => setTz(e.target.value)} />
+        </Field>
+        <Field label="KKM default" hint="0–100" error={localError ?? undefined}>
+          <Input type="number" min={0} max={100} value={kkm} onChange={(e) => setKkm(e.target.value)} />
+        </Field>
       </div>
-      {localError && <p className="text-xs text-red-700">{localError}</p>}
       <p className="text-xs text-slate-500">
         KKM default dipakai saat sebuah nilai tidak menyetel KKM-nya sendiri.
       </p>
+      <Button onClick={save}>Simpan pengaturan</Button>
     </div>
   );
 }

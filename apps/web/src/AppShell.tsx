@@ -9,6 +9,8 @@ import { RoleSwitcher } from "./RoleSwitcher";
 import { TeacherWorkspace } from "./TeacherWorkspace";
 import { ParentWorkspace } from "./ParentWorkspace";
 import { AdminSetupWorkspace } from "./AdminSetupWorkspace";
+import { Badge, Button, EmptyState as EmptyStateCard } from "./components/ui";
+import { WORKSPACE_LABEL } from "./components/status";
 
 /**
  * Authenticated app shell. Detects supported workspaces from membership roles,
@@ -44,52 +46,51 @@ export function AppShell({
   const primary = memberships[0];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2 px-4 py-2">
-          <div className="min-w-0">
-            <span className="text-base font-semibold text-slate-800">SOKA</span>
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="text-lg font-bold tracking-tight text-brand-700">SOKA</span>
             {primary && (
-              <span className="ml-2 truncate text-xs text-slate-500">
-                {primary.schoolName} · {primary.roles.join(", ")}
+              <span className="hidden min-w-0 items-center gap-2 sm:flex">
+                <span className="h-4 w-px bg-slate-200" />
+                <span className="truncate text-sm font-medium text-slate-700">
+                  {primary.schoolName}
+                </span>
+                {active && <Badge tone="brand">{WORKSPACE_LABEL[active]}</Badge>}
               </span>
             )}
           </div>
           <div className="flex items-center gap-2">
             {workspaces.length > 1 && active && (
-              <RoleSwitcher
-                value={active}
-                available={workspaces}
-                onChange={setWorkspace}
-              />
+              <RoleSwitcher value={active} available={workspaces} onChange={setWorkspace} />
             )}
-            <div className="hidden text-right sm:block">
-              {email && (
-                <span className="block text-xs text-slate-500">{email}</span>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={onSignOut}
-              disabled={signingOut}
-              className="rounded-lg border border-slate-300 px-3 py-1 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-60"
-            >
+            {email && (
+              <span className="hidden max-w-[12rem] truncate text-xs text-slate-500 md:block">
+                {email}
+              </span>
+            )}
+            <Button variant="secondary" size="sm" onClick={onSignOut} disabled={signingOut}>
               {signingOut ? "Keluar…" : "Keluar"}
-            </button>
+            </Button>
           </div>
         </div>
+        {/* On mobile, show school context on its own line so nothing overflows. */}
+        {primary && (
+          <div className="flex items-center gap-2 border-t border-slate-100 px-4 py-1.5 sm:hidden">
+            <span className="truncate text-xs font-medium text-slate-600">
+              {primary.schoolName}
+            </span>
+            {active && <Badge tone="brand">{WORKSPACE_LABEL[active]}</Badge>}
+          </div>
+        )}
         {signOutError && (
-          <div className="border-t border-red-100 bg-red-50">
-            <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-1.5">
-              <span className="text-xs text-red-700">{signOutError}</span>
-              <button
-                type="button"
-                onClick={onSignOut}
-                disabled={signingOut}
-                className="shrink-0 rounded border border-red-300 px-2 py-0.5 text-xs text-red-700 hover:bg-red-100 disabled:opacity-60"
-              >
+          <div className="border-t border-rose-100 bg-rose-50">
+            <div className="mx-auto flex max-w-4xl items-center justify-between gap-2 px-4 py-1.5">
+              <span className="text-xs text-rose-700">{signOutError}</span>
+              <Button variant="danger" size="sm" onClick={onSignOut} disabled={signingOut}>
                 Coba lagi
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -97,7 +98,13 @@ export function AppShell({
 
       <main>
         {active === null ? (
-          <EmptyState />
+          <div className="mx-auto mt-10 max-w-md px-4">
+            <EmptyStateCard
+              tone="warning"
+              title="Belum ada akses ruang kerja"
+              description="Akun Anda belum terhubung sebagai guru/wali kelas atau orang tua di sekolah mana pun. Minta kode sekolah atau kode tautan anak dari pihak sekolah untuk melanjutkan."
+            />
+          </div>
         ) : active === "teacher" ? (
           <TeacherWorkspace />
         ) : active === "parent" ? (
@@ -109,20 +116,6 @@ export function AppShell({
           />
         )}
       </main>
-    </div>
-  );
-}
-
-/** Shown when the user has no supported membership/role yet. */
-function EmptyState() {
-  return (
-    <div className="mx-auto mt-10 max-w-md rounded-xl border border-amber-200 bg-amber-50 p-5 text-center">
-      <p className="font-medium text-slate-800">Belum ada akses ruang kerja.</p>
-      <p className="mt-1 text-sm text-slate-600">
-        Akun Anda belum terhubung sebagai guru/wali kelas atau orang tua di
-        sekolah mana pun. Minta kode sekolah atau kode tautan anak dari pihak
-        sekolah untuk melanjutkan.
-      </p>
     </div>
   );
 }
