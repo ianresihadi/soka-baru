@@ -228,10 +228,9 @@ covering `GET /admin/memberships`:
 
 - requires authentication (401 when unauthenticated);
 - forbids non-admin callers — teacher-only (403) and `orang_tua` (403);
-- returns same-tenant memberships only (School A admin cannot see School B's
-  teacher membership);
-- `?role=guru|wali_kelas` filters to teacher-eligible memberships and excludes
-  parent-only ones;
+- returns same-tenant, teacher-eligible memberships only — School B is excluded,
+  and the unfiltered default excludes parent-only and admin-only memberships;
+- `?role=guru|wali_kelas` narrows further within teacher roles;
 - rejects an unsupported `role` filter (400);
 - ignores a client-supplied `schoolId` query param (scope stays the caller's
   tenant).

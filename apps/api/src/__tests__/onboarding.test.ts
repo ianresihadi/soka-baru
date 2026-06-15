@@ -432,7 +432,7 @@ describe("admin membership listing (GET /admin/memberships)", () => {
     expect((await list()).status).toBe(403);
   });
 
-  it("lists only same-tenant memberships for the admin", async () => {
+  it("lists only same-tenant, teacher-eligible memberships for the admin", async () => {
     asUser(u.adminA);
     const { status, rows } = await list();
     expect(status).toBe(200);
@@ -440,6 +440,11 @@ describe("admin membership listing (GET /admin/memberships)", () => {
     // School A teacher membership is present; School B's is not.
     expect(ids).toContain(ctxIds.teacherMembershipA);
     expect(ids).not.toContain(ctxIds.teacherMembershipB);
+    // Unfiltered default is teacher-eligible only: parent-only/admin-only excluded.
+    expect(ids).not.toContain(ctxIds.nonTeacherMembershipA);
+    expect(
+      rows.every((r) => r.roles.includes("guru") || r.roles.includes("wali_kelas")),
+    ).toBe(true);
   });
 
   it("filters to teacher-eligible memberships with ?role=", async () => {

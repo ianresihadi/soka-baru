@@ -256,12 +256,14 @@ export async function assignTeacherToClass(
 }
 
 /**
- * Narrow, read-only listing of same-tenant memberships for the Admin Setup UI's
- * teacher-assignment selector. NOT general user management:
+ * Narrow, read-only listing of same-tenant TEACHER-ELIGIBLE memberships for the
+ * Admin Setup UI's teacher-assignment selector. NOT general user management:
  * - scoped strictly to ctx.schoolId (server-derived; no client school_id);
  * - returns only the minimal fields needed to pick a membership;
- * - optional roleFilter keeps only memberships holding one of those roles
- *   (used to show teacher-eligible memberships for class assignment).
+ * - always filtered to teacher roles. When `roleFilter` is omitted it defaults
+ *   to all teacher roles (`guru`/`wali_kelas`), so parent-only and admin-only
+ *   memberships are never returned. A narrower `roleFilter` (e.g. just `guru`)
+ *   restricts further.
  */
 export interface TenantMembershipSummary {
   membershipId: string;
@@ -271,11 +273,18 @@ export interface TenantMembershipSummary {
   roles: Role[];
 }
 
+/** Roles eligible for class teacher assignment. */
+const TEACHER_ELIGIBLE_ROLES: readonly Role[] = ["guru", "wali_kelas"];
+
 export async function listTeacherMembershipsForTenant(
   db: Database,
   ctx: TenantContext,
   roleFilter?: Role[],
 ): Promise<TenantMembershipSummary[]> {
+  // Default to teacher-eligible roles; an explicit filter narrows within them.
+  const effectiveFilter =
+    roleFilter && roleFilter.length > 0 ? roleFilter : TEACHER_ELIGIBLE_ROLES;
+
   const rows = await db
     .select({
       membershipId: schoolMemberships.id,
@@ -294,9 +303,7 @@ export async function listTeacherMembershipsForTenant(
       .from(membershipRoles)
       .where(eq(membershipRoles.membershipId, row.membershipId));
     const roles = roleRows.map((r) => r.role as Role);
-    if (roleFilter && roleFilter.length > 0) {
-      if (!roles.some((r) => roleFilter.includes(r))) continue;
-    }
+    if (!roles.some((r) => effectiveFilter.includes(r))) continue;
     result.push({ ...row, roles });
   }
   return result;

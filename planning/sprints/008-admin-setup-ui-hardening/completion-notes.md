@@ -32,9 +32,11 @@ for Architect review. PR not merged.
   client-supplied `schoolId` query param is ignored.
 - Added service helper `listTeacherMembershipsForTenant(db, ctx, roleFilter?)`
   in `packages/db/src/onboarding.ts`: same-tenant memberships joined to `user`,
-  returning minimal fields (`membershipId`, `userId`, `name`, `email`, `roles[]`),
-  optionally filtered to memberships holding a teacher role. Read-only; no account
-  or role creation; not general user management.
+  returning minimal fields (`membershipId`, `userId`, `name`, `email`, `roles[]`).
+  Always teacher-eligible — when `roleFilter` is omitted it defaults to
+  `guru`/`wali_kelas`, so parent-only and admin-only memberships are never
+  returned (Architect P2 fix); an explicit filter narrows within teacher roles.
+  Read-only; no account or role creation; not general user management.
 - Extended school settings to make **default KKM editable** (Architect review):
   `schoolSettingsUpdateSchema` now accepts `defaultKkm` (0–100 integer, matching
   per-grade KKM rules); `updateSchoolSettings` persists it. No new route — the

@@ -182,7 +182,7 @@ read-only membership listing used by the teacher-assignment selector.
 
 | Route | Required role | Purpose |
 |---|---|---|
-| `GET /admin/memberships?role=guru\|wali_kelas` | `admin_sekolah`/`soka_internal` | List same-tenant memberships for teacher assignment. Optional `role` filters to memberships holding that teacher role. |
+| `GET /admin/memberships?role=guru\|wali_kelas` | `admin_sekolah`/`soka_internal` | List same-tenant teacher-eligible memberships for class assignment. |
 
 Behavior:
 
@@ -192,8 +192,10 @@ Behavior:
   `school_id`; a client-supplied `schoolId` query param is ignored.
 - Returns minimal fields only: `membershipId`, `userId`, `name`, `email`,
   `roles[]`.
-- `role` must be `guru` or `wali_kelas`; any other value returns `400
-  invalid_input`. When omitted, all same-tenant memberships are returned.
+- Always teacher-eligible: when `role` is omitted it defaults to all teacher
+  roles (`guru`/`wali_kelas`), so parent-only and admin-only memberships are
+  never returned. `role` (if present) must be `guru` or `wali_kelas` and narrows
+  within that set; any other value returns `400 invalid_input`.
 
 The workspace reuses existing routes for the rest of setup: `GET|POST
 /admin/classes`, `GET|POST /admin/students`, `POST /admin/students/bulk`,
