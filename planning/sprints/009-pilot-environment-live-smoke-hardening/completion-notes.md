@@ -27,7 +27,8 @@ Architect review. PR not yet opened.
     reading `DATABASE_URL`.
   - `packages/db/src/seed.ts` — `loadEnv()` before a dynamic `import("@soka/auth")`.
 - Why: previously **nothing** loaded `.env` (no dotenv; `tsx` does not auto-load),
-  so the documented live path (`cp .env.example .env` → `pnpm db:migrate`) failed
+  so the documented live path (copy `.env.example` to `.env` — Windows CMD
+  `copy`, PowerShell `Copy-Item`, Unix `cp` — then `pnpm db:migrate`) failed
   unless the user exported vars manually. This is the narrow live-path fix allowed
   by the sprint. No schema/migration; no behavior change when env is already set.
 
@@ -64,8 +65,10 @@ Architect review. PR not yet opened.
 ## Docs updated
 
 - `docs/SETUP.md` — `.env` auto-load + non-overwrite note; what a passing `.env`
-  needs; `pnpm check:env` step; Corepack activation for `validate`; test count
-  100→110; scripted `pnpm smoke:live` step; renumbered sections.
+  needs; `pnpm check:env` step; OS-specific copy commands (Windows `copy` /
+  PowerShell `Copy-Item` / Unix `cp`); Corepack activation moved before the first
+  `pnpm install` (fixes `pnpm is not recognized` and nested-`pnpm` in `validate`);
+  test count 100→110; scripted `pnpm smoke:live` step; renumbered sections.
 - `docs/PILOT_SMOKE_CHECKLIST.md` — added a `check:env` setup step and a
   "Scripted smoke" section (S1–S6) before the manual paths.
 - `docs/VALIDATION.md` — Sprint 009 section: tooling, quality-gate story, and

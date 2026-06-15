@@ -15,9 +15,20 @@ database setup and the dev servers.
 
 ## 1. Environment variables
 
-Copy the example file and fill it in:
+Copy the example file and fill it in. Use the command for your shell:
+
+```bat
+REM Windows CMD
+copy .env.example .env
+```
+
+```powershell
+# PowerShell
+Copy-Item .env.example .env
+```
 
 ```bash
+# macOS / Linux / Git Bash
 cp .env.example .env
 ```
 
@@ -41,16 +52,20 @@ A passing live `.env` must contain real values for `DATABASE_URL`,
 
 ## 2. Install dependencies
 
-```bash
-pnpm install
-```
-
-On Windows / Corepack, if `pnpm` is not on PATH (so nested calls in `pnpm validate`
-fail), activate it once:
+First make sure `pnpm` is available. This repo pins pnpm 10.33.0 via
+`packageManager`; the easiest way to match it is Corepack. **Do this before
+`pnpm install`** — it also fixes `pnpm is not recognized` on Windows and the
+nested-`pnpm` failure in `pnpm validate`:
 
 ```bash
 corepack enable
 corepack prepare pnpm@10.33.0 --activate
+```
+
+Then install:
+
+```bash
+pnpm install
 ```
 
 ## 3. Offline checks (no database needed)

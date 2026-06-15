@@ -18,7 +18,9 @@ pnpm validate            # = pnpm test && pnpm typecheck && pnpm --filter @soka/
                          # On Windows/Corepack, run `corepack enable` first (see below).
 
 # 2. Configure + validate environment
-cp .env.example .env     # then edit with real values
+cp .env.example .env     # Windows CMD: copy .env.example .env
+                         # PowerShell:  Copy-Item .env.example .env
+                         # then edit with real values
 pnpm check:env           # fails clearly if required vars are missing/placeholder
 
 # 3. Live database (Neon or local Postgres; DATABASE_URL in .env)
