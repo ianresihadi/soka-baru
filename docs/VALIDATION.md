@@ -214,3 +214,47 @@ The seed extension reuses already-tested repository functions
 (`bindUserToSchoolByCode`, class/student/teacher-assignment/parent-link inserts)
 with idempotent guards; it has no dedicated automated test and is exercised via
 `pnpm db:seed` against a live database during the smoke checklist.
+
+## Sprint 008 — Admin Setup UI Hardening
+
+Sprint 008 wraps the existing `/admin/*` onboarding routes in an admin-only
+Admin / Setup workspace and adds one narrow backend route,
+`GET /admin/memberships`.
+
+### New backend tests
+
+Added to `apps/api/src/__tests__/onboarding.test.ts` (PGlite + real migrations),
+covering `GET /admin/memberships`:
+
+- requires authentication (401 when unauthenticated);
+- forbids non-admin callers — teacher-only (403) and `orang_tua` (403);
+- returns same-tenant, teacher-eligible memberships only — School B is excluded,
+  and the unfiltered default excludes parent-only and admin-only memberships;
+- `?role=guru|wali_kelas` narrows further within teacher roles;
+- rejects an unsupported `role` filter (400);
+- ignores a client-supplied `schoolId` query param (scope stays the caller's
+  tenant).
+
+Added to `apps/api/src/__tests__/daily-loop.test.ts`, covering `defaultKkm` on
+`PATCH /admin/school-settings`:
+
+- an admin can update `defaultKkm` (persisted);
+- an out-of-range (150) or non-integer (70.5) `defaultKkm` is rejected (400) and
+  not persisted;
+- a non-admin (teacher-only) caller is forbidden (403) and cannot change settings.
+
+### Results
+
+- `pnpm test`: **110/110 passing** (was 100; +7 admin-membership, +3 defaultKkm
+  settings). Suite: tenant 17, onboarding **32**, daily-loop **23**, parent-trust
+  17, academic-records 21.
+- `pnpm typecheck`: clean across all packages (incl. the new admin UI).
+- `pnpm --filter @soka/web build`: succeeds.
+- `pnpm validate`: succeeds (runs the three above).
+
+### Manual / workflow validation
+
+The Admin / Setup workspace (class/student/teacher/parent-code/settings) is
+validated manually; the admin setup path is documented at the top of
+`docs/PILOT_SMOKE_CHECKLIST.md`. The frontend has no automated test runner;
+UI is covered by typecheck + build + the manual checklist.

@@ -120,7 +120,11 @@ export async function getOrCreateSchoolSettings(
 export async function updateSchoolSettings(
   db: Database,
   tenant: TenantContext,
-  input: { attendanceCutoffTime?: string; schoolTimezone?: string },
+  input: {
+    attendanceCutoffTime?: string;
+    schoolTimezone?: string;
+    defaultKkm?: number;
+  },
 ) {
   await getOrCreateSchoolSettings(db, tenant);
   const set: Record<string, unknown> = { updatedAt: new Date() };
@@ -128,6 +132,7 @@ export async function updateSchoolSettings(
     set.attendanceCutoffTime = input.attendanceCutoffTime;
   if (input.schoolTimezone !== undefined)
     set.schoolTimezone = input.schoolTimezone;
+  if (input.defaultKkm !== undefined) set.defaultKkm = input.defaultKkm;
   const updated = await db
     .update(schoolSettings)
     .set(set)

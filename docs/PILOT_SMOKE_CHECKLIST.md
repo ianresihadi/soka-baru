@@ -10,6 +10,7 @@ below are **LOCAL DEV ONLY**. Notifications are in-app only — this build does
 
 Seeded references used throughout:
 
+- Admin: `admin.a@example.com` / `LocalDevPassword123!` (`admin_sekolah`, SD Soka Alpha).
 - Teacher: `guru.a@example.com` / `LocalDevPassword123!` (wali kelas of **Kelas 1A**).
 - Parent: `multi@example.com` / `LocalDevPassword123!` (parent of **Adinda Putri**).
 - Web app: `http://localhost:5173` · API: `http://localhost:8787`.
@@ -22,6 +23,29 @@ Seeded references used throughout:
 4. [ ] Run seed: `pnpm db:seed`.
 5. [ ] Start API: `pnpm dev:api` (http://localhost:8787).
 6. [ ] Start web: `pnpm dev:web` (http://localhost:5173).
+
+## Admin setup path (Sprint 008)
+
+The seed already creates a class, roster, teacher assignment, and parent link.
+This path verifies the Admin / Setup workspace can do the same setup manually for
+a fresh school. It is optional before the teacher/parent paths below.
+
+A. [ ] Sign in as `admin.a@example.com`. The shell shows the **role switcher**
+   with an **Admin / Setup** option (only admins see it); open it.
+B. [ ] **Kelas** (`#setup-classes`): create a class (e.g. "Kelas 2A"); confirm it
+   appears in the list.
+C. [ ] **Siswa** (`#setup-students`): create a single student, then add a few via
+   the bulk textarea (one name per line); assign one student to "Kelas 2A".
+D. [ ] **Penugasan Guru** (`#setup-teachers`): assign `guru.a` (shown in the
+   teacher selector) to "Kelas 2A" as `wali_kelas` or `guru`. Confirm a
+   non-teacher membership is rejected with a clear message.
+E. [ ] **Kode Tautan Ortu** (`#setup-codes`): generate a link code for a student,
+   confirm it appears with status `active`, copy it, then revoke it.
+F. [ ] **Pengaturan Sekolah** (`#setup-settings`): change the attendance cutoff,
+   timezone, and **Default KKM** and save; confirm success. An invalid timezone
+   or an out-of-range KKM (e.g. 150) shows a clear error and is not saved.
+G. [ ] Confirm a non-admin (e.g. `guru.a@example.com`) does **not** see the Admin /
+   Setup option.
 
 ## Teacher path
 

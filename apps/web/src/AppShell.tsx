@@ -1,9 +1,14 @@
 import { useMemo, useState } from "react";
 import type { MembershipSummary } from "@soka/shared";
-import { deriveWorkspaceAccess } from "./api";
-import { RoleSwitcher, type Workspace } from "./RoleSwitcher";
+import {
+  availableWorkspaces,
+  deriveWorkspaceAccess,
+  type Workspace,
+} from "./api";
+import { RoleSwitcher } from "./RoleSwitcher";
 import { TeacherWorkspace } from "./TeacherWorkspace";
 import { ParentWorkspace } from "./ParentWorkspace";
+import { AdminSetupWorkspace } from "./AdminSetupWorkspace";
 
 /**
  * Authenticated app shell. Detects supported workspaces from membership roles,
@@ -27,16 +32,14 @@ export function AppShell({
     () => deriveWorkspaceAccess(memberships),
     [memberships],
   );
-  const [workspace, setWorkspace] = useState<Workspace>(
-    access.teacher ? "teacher" : "parent",
-  );
+  const workspaces = useMemo(() => availableWorkspaces(access), [access]);
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
 
-  const both = access.teacher && access.parent;
-  const active: Workspace = both
-    ? workspace
-    : access.teacher
-      ? "teacher"
-      : "parent";
+  // Active workspace = the user's chosen one if still available, else the first.
+  const active: Workspace | null =
+    workspace && workspaces.includes(workspace)
+      ? workspace
+      : (workspaces[0] ?? null);
 
   const primary = memberships[0];
 
@@ -53,7 +56,13 @@ export function AppShell({
             )}
           </div>
           <div className="flex items-center gap-2">
-            {both && <RoleSwitcher value={active} onChange={setWorkspace} />}
+            {workspaces.length > 1 && active && (
+              <RoleSwitcher
+                value={active}
+                available={workspaces}
+                onChange={setWorkspace}
+              />
+            )}
             <div className="hidden text-right sm:block">
               {email && (
                 <span className="block text-xs text-slate-500">{email}</span>
@@ -87,12 +96,17 @@ export function AppShell({
       </header>
 
       <main>
-        {!access.teacher && !access.parent ? (
+        {active === null ? (
           <EmptyState />
         ) : active === "teacher" ? (
           <TeacherWorkspace />
-        ) : (
+        ) : active === "parent" ? (
           <ParentWorkspace />
+        ) : (
+          <AdminSetupWorkspace
+            schoolName={primary?.schoolName}
+            schoolCode={primary?.schoolCode}
+          />
         )}
       </main>
     </div>

@@ -151,6 +151,30 @@ Implemented:
   isolation for classes/students/teacher-assignments/link-codes, the link-code
   lifecycle (used/expired/revoked), and the role guards.
 
+### Sprint 008 Admin Setup UI Access
+
+- A third app-shell workspace, **Admin / Setup**, is shown only to users whose
+  memberships include `admin_sekolah` or `soka_internal`. `guru`, `wali_kelas`,
+  and `orang_tua` (without an admin role) never see or reach it. Workspace
+  visibility is a UX convenience; the real authority remains the backend
+  `/admin/*` role guards (`requireAdmin`).
+- The workspace only calls existing tenant-scoped `/admin/*` routes plus the new
+  read-only `GET /admin/memberships`. It never sends `school_id`; tenant scope is
+  server-derived.
+- `GET /admin/memberships` requires `admin_sekolah`/`soka_internal`, returns only
+  same-tenant, **teacher-eligible** memberships (minimal fields), and ignores any
+  client-supplied `schoolId`. When `role` is omitted it defaults to teacher roles
+  (`guru`/`wali_kelas`) — parent-only and admin-only memberships are never
+  returned; an optional `role=guru|wali_kelas` narrows within that set. It is
+  read-only — it creates no accounts, assigns no roles, and is not a general
+  user-management surface. Tests prove auth, admin-role guard, same-tenant
+  isolation, teacher-eligible default, role filtering, and that a client
+  `schoolId` is ignored.
+- Parent linking remains school-issued-code only (no free claim by name/NISN).
+  Settings edits cover `attendanceCutoffTime`, `schoolTimezone`, and `defaultKkm`
+  (0–100 integer) through the existing `PATCH /admin/school-settings`.
+- No parent-visibility, teacher class-access, or onboarding behavior changed.
+
 ### Postgres RLS — Deferred (with reason)
 
 RLS is NOT implemented in Sprint 002. SOKA Baru does not use Supabase Auth, so

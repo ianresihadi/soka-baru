@@ -84,6 +84,7 @@ must never be used in production.**
 |---|---|---|---|---|
 | `guru.a@example.com` | `LocalDevPassword123!` | `guru`, `wali_kelas` | SD Soka Alpha (`SOKA-A`) | Teacher workspace: Papan Pagi, attendance for **Kelas 1A**, Nilai & Catatan (create/publish). |
 | `multi@example.com` | `LocalDevPassword123!` | `wali_kelas`, `orang_tua` | SD Soka Alpha (`SOKA-A`) | Both workspaces (role switcher). As parent, linked to child **Adinda Putri**: Beranda, attendance, published grades/notes, messages, notifications. |
+| `admin.a@example.com` | `LocalDevPassword123!` | `admin_sekolah` | SD Soka Alpha (`SOKA-A`) | **Admin / Setup** workspace: create classes/students, assign students to classes, assign teachers, generate/revoke parent link codes, edit cutoff/timezone. |
 | `guru.b@example.com` | `LocalDevPassword123!` | `guru` | SD Soka Beta (`SOKA-B`) | Teacher workspace for School B (used to demonstrate tenant isolation). |
 
 Demo data created in **SD Soka Alpha** by the seed:
@@ -101,6 +102,9 @@ workflows can be smoke-tested end to end. See `docs/PILOT_SMOKE_CHECKLIST.md`.
   server session.
 - Notifications are in-app only. Browser/native push is not available in this
   build.
-- There is no admin setup UI yet; teacher accounts/memberships and the demo
-  class/roster/parent-link are created via the seed (server-controlled), not via
-  a client self-claim path.
+- The Admin / Setup workspace (Sprint 008) lets an `admin_sekolah`/`soka_internal`
+  user manage classes, students, teacher assignments, parent link codes, and
+  school settings (attendance cutoff, timezone, and default KKM). It does **not**
+  create user accounts or roles — teacher/admin accounts and memberships are still
+  provisioned via the seed (server-controlled internal binding), not a client
+  self-claim path.

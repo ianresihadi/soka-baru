@@ -36,6 +36,7 @@ import {
   listChildrenForParent,
   listClasses,
   listMembershipsForTenant,
+  listTeacherMembershipsForTenant,
   listNotificationsForUser,
   listParentLinkCodes,
   listStudents,
@@ -327,6 +328,32 @@ export function createApp(deps: AppDeps) {
         return c.json({ error: result.reason }, status);
       }
       return c.json({ ok: true }, 201);
+    },
+  );
+
+  // Narrow, read-only membership listing for the Admin Setup teacher-assignment
+  // selector. Admin-only, same-tenant (ctx.schoolId), no write, no client
+  // school_id. `role` may filter to teacher-eligible memberships.
+  app.get(
+    "/admin/memberships",
+    requireAuth,
+    requireMembership,
+    requireAdmin,
+    async (c) => {
+      const role = c.req.query("role");
+      let roleFilter: Role[] | undefined;
+      if (role !== undefined) {
+        if (role !== "guru" && role !== "wali_kelas") {
+          return c.json({ error: "invalid_input" }, 400);
+        }
+        roleFilter = [role];
+      }
+      const memberships = await listTeacherMembershipsForTenant(
+        deps.db,
+        c.get("tenant"),
+        roleFilter,
+      );
+      return c.json({ memberships });
     },
   );
 
