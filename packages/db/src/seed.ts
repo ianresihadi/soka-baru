@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
-import { auth } from "@soka/auth";
 import { bindUserToSchoolByCode } from "./repositories";
 import { getDb, getPool } from "./client";
+import { loadEnv } from "./loadEnv";
 import {
   classes,
   parentStudentLinks,
@@ -10,6 +10,11 @@ import {
   teacherAssignments,
   user,
 } from "./schema";
+
+// Load .env (without overwriting real env vars) before importing auth, which
+// resolves the database from process.env at module load.
+loadEnv();
+const { auth } = await import("@soka/auth");
 
 // LOCAL DEV ONLY. These are not production credentials.
 const LOCAL_PASSWORD = "LocalDevPassword123!";

@@ -1,5 +1,6 @@
 export * as schema from "./schema";
 export * from "./schema";
+export * from "./loadEnv";
 export * from "./client";
 export * from "./repositories";
 export * from "./onboarding";
