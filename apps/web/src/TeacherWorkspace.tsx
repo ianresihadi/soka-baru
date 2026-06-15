@@ -1,4 +1,5 @@
 import { PapanPagi } from "./PapanPagi";
+import { NavChips } from "./components/ui";
 
 const NAV = [
   { href: "#papan-pagi", label: "Papan Pagi" },
@@ -14,18 +15,10 @@ const NAV = [
  */
 export function TeacherWorkspace() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-4">
-      <nav className="mb-2 flex flex-wrap gap-2">
-        {NAV.map((n) => (
-          <a
-            key={n.href}
-            href={n.href}
-            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 hover:border-slate-400 hover:text-slate-800"
-          >
-            {n.label}
-          </a>
-        ))}
-      </nav>
+    <div className="mx-auto max-w-4xl px-4 py-4">
+      <div className="sticky top-[3.25rem] z-[5] -mx-4 mb-3 border-b border-slate-100 bg-stone-50/95 px-4 py-2 backdrop-blur sm:top-[3.5rem]">
+        <NavChips items={NAV} />
+      </div>
       <PapanPagi />
     </div>
   );

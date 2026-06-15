@@ -126,3 +126,33 @@ G. [ ] Confirm a non-admin (e.g. `guru.a@example.com`) does **not** see the Admi
 
 21. [ ] Click **Keluar** and confirm you are returned to the sign-in surface
     (server session cleared).
+
+## Visual walkthrough (Sprint 010)
+
+After `pnpm db:seed`, the School A demo child **Adinda Putri** has seeded content
+so the pages are not empty: one attendance record (today, Hadir), one published
+grade (Matematika — Ulangan Harian 1, 85/100), one published note, and one
+parent→teacher message. Use it to judge product feel.
+
+Check these viewports for each surface (no text overflow, overlap, unreadable
+contrast, broken buttons, or dead navigation):
+
+- Desktop/laptop ~1366×768.
+- Mobile ~390×844.
+
+V1. [ ] Login screen is centered, warm, and branded (not a raw form).
+V2. [ ] Teacher Papan Pagi shows the numbered order (1 Status Absensi → 2 Pesan
+    Ortu → 3 Siswa Perlu Perhatian → 4 Jadwal), a progress bar, and tone-coloured
+    attendance buttons with "Tersimpan" badges. Usable on mobile.
+V3. [ ] Parent home leads with a reassurance summary card, then calm cards for
+    notifications, attendance, nilai (published only), catatan (published only),
+    and pesan. Mobile-first.
+V4. [ ] Admin / Setup shows the overview (counts + setup checklist), then Kelas,
+    Siswa, Penugasan Guru, Kode Tautan Ortu, and Pengaturan (cutoff/timezone/KKM).
+V5. [ ] For a multi-role account, the header role switcher renders only the
+    available workspaces and does not overflow on mobile.
+
+Builder visual QA (this environment) used a built-in web server (`vite preview`)
+with mocked API responses to screenshot login, teacher, parent, and admin at both
+viewports. A live walkthrough still requires `pnpm dev:api` + `pnpm dev:web`
+against a seeded database.

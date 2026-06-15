@@ -8,7 +8,7 @@ import { ParentHome } from "./ParentHome";
  */
 export function ParentWorkspace() {
   return (
-    <div className="px-4 pb-8">
+    <div className="px-4 pb-10 pt-2">
       <ParentHome />
     </div>
   );

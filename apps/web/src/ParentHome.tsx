@@ -1,4 +1,16 @@
 import { useEffect, useState } from "react";
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Input,
+  Loading,
+  NavChips,
+  Select,
+  SectionHeader,
+} from "./components/ui";
+import { attendanceStatus, kkmView } from "./components/status";
 
 interface Child {
   studentId: string;
@@ -41,26 +53,28 @@ interface Msg {
   createdAt: string;
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  hadir: "Hadir",
-  sakit: "Sakit",
-  izin: "Izin",
-  alpa: "Alpa",
-  terlambat: "Terlambat",
-};
-
 async function getJson<T>(path: string): Promise<T | null> {
   const res = await fetch(path, { credentials: "include" });
   if (!res.ok) return null;
   return (await res.json()) as T;
 }
 
+const NAV = [
+  { href: "#beranda", label: "Beranda" },
+  { href: "#absensi-ortu", label: "Absensi" },
+  { href: "#nilai-ortu", label: "Nilai" },
+  { href: "#catatan-ortu", label: "Catatan" },
+  { href: "#pesan-guru", label: "Pesan" },
+  { href: "#notifikasi", label: "Notifikasi" },
+];
+
 /**
- * Mobile-first, reassurance-first parent validation UI (Sprint 005).
- * Simple-card summaries, details below. Not a teacher/admin dashboard.
+ * Mobile-first, reassurance-first parent home. Simple-card summaries, details
+ * below. Only published grades and published notes ever appear here.
  */
 export function ParentHome() {
   const [home, setHome] = useState<Home | null>(null);
+  const [loading, setLoading] = useState(true);
   const [studentId, setStudentId] = useState<string>("");
   const [attendance, setAttendance] = useState<AttRow[]>([]);
   const [notifs, setNotifs] = useState<Notif[]>([]);
@@ -75,6 +89,7 @@ export function ParentHome() {
   async function loadHome(sid?: string) {
     const h = await getJson<Home>(`/parent/home${sid ? `?studentId=${sid}` : ""}`);
     setHome(h);
+    setLoading(false);
     const child = h?.selectedChild?.studentId;
     if (child) {
       setStudentId(child);
@@ -83,6 +98,7 @@ export function ParentHome() {
       setThreads((await getJson<{ threads: Thread[] }>(`/parent/messages/threads?studentId=${child}`))?.threads ?? []);
       setGrades((await getJson<{ grades: typeof grades }>(`/parent/grades?studentId=${child}`))?.grades ?? []);
       setPubNotes((await getJson<{ notes: typeof pubNotes }>(`/parent/student-notes?studentId=${child}`))?.notes ?? []);
+      setThread(null);
     }
   }
 
@@ -116,186 +132,208 @@ export function ParentHome() {
     void loadHome(studentId);
   }
 
-  if (!home) {
-    return <p className="mt-4 text-sm text-gray-500">Sign in as orang tua to load Beranda Anak.</p>;
+  if (loading) {
+    return (
+      <div className="mx-auto mt-6 max-w-md">
+        <Loading label="Memuat Beranda Anak…" />
+      </div>
+    );
   }
 
-  if (!home.selectedChild) {
+  if (!home || !home.selectedChild) {
     return (
-      <div className="mx-auto mt-6 max-w-md rounded-xl border bg-amber-50 p-4 text-center">
-        <p className="font-medium">Belum ada anak tertaut.</p>
-        <p className="mt-1 text-sm text-gray-600">
-          Minta kode tautan dari sekolah untuk menghubungkan akun Anda dengan anak Anda.
-        </p>
+      <div className="mx-auto mt-6 max-w-md">
+        <EmptyState
+          tone="warning"
+          title="Belum ada anak tertaut"
+          description="Minta kode tautan dari sekolah untuk menghubungkan akun Anda dengan anak Anda."
+        />
       </div>
     );
   }
 
   const child = home.selectedChild;
-  const nav = [
-    { href: "#beranda", label: "Beranda" },
-    { href: "#absensi-ortu", label: "Absensi" },
-    { href: "#nilai-ortu", label: "Nilai" },
-    { href: "#catatan-ortu", label: "Catatan" },
-    { href: "#pesan-guru", label: "Pesan" },
-    { href: "#notifikasi", label: "Notifikasi" },
-  ];
+  const needsAction = home.reassurance?.needsAction ?? false;
+  const todayStatus = attendanceStatus(home.today?.attendanceStatus);
+  const unread = notifs.filter((n) => !n.readAt).length;
+
   return (
-    <div className="mx-auto mt-2 max-w-md space-y-4">
+    <div className="mx-auto mt-2 max-w-md space-y-3">
       {/* Child switcher */}
       {home.children.length > 1 && (
-        <select
-          className="w-full rounded-lg border px-3 py-2 text-sm"
-          value={studentId}
-          onChange={(e) => loadHome(e.target.value)}
-        >
+        <Select value={studentId} onChange={(e) => loadHome(e.target.value)} aria-label="Pilih anak">
           {home.children.map((c) => (
             <option key={c.studentId} value={c.studentId}>
               {c.fullName} — {c.schoolName}
             </option>
           ))}
-        </select>
+        </Select>
       )}
 
-      {/* Section nav (anchors to real sections only) */}
-      <nav className="flex flex-wrap gap-1.5">
-        {nav.map((n) => (
-          <a
-            key={n.href}
-            href={n.href}
-            className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600"
-          >
-            {n.label}
-          </a>
-        ))}
-      </nav>
+      <NavChips items={NAV} />
 
-      {/* Beranda Anak summary */}
-      <div id="beranda" className="scroll-mt-20 rounded-xl border bg-white p-4 shadow-sm">
-        <p className="text-sm text-gray-500">
+      {/* Beranda Anak reassurance summary */}
+      <section
+        id="beranda"
+        className={`scroll-mt-24 rounded-xl2 border p-4 shadow-card ${
+          needsAction ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"
+        }`}
+      >
+        <p className="text-xs text-slate-500">
           {child.fullName} · {child.className ?? "-"} · {child.schoolName}
         </p>
-        <p className="mt-2 text-lg font-semibold">{home.reassurance?.headline}</p>
-        {home.reassurance?.needsAction && (
-          <span className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
-            Perlu perhatian
-          </span>
-        )}
-      </div>
+        <p className="mt-1.5 text-lg font-semibold text-slate-800">
+          {home.reassurance?.headline}
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <Badge tone={todayStatus.tone}>Hari ini: {todayStatus.label}</Badge>
+          {needsAction ? (
+            <Badge tone="warning">Perlu perhatian</Badge>
+          ) : (
+            <Badge tone="success">Aman</Badge>
+          )}
+          {unread > 0 && <Badge tone="info">{unread} notifikasi baru</Badge>}
+        </div>
+        {needsAction && home.reassurance?.reasons?.length ? (
+          <p className="mt-2 text-sm text-amber-800">{home.reassurance.reasons.join(" · ")}</p>
+        ) : null}
+      </section>
 
       {/* Notifications */}
-      <div id="notifikasi" className="scroll-mt-20 rounded-xl border bg-white p-4">
-        <h3 className="text-sm font-semibold">Notifikasi</h3>
+      <Card id="notifikasi">
+        <SectionHeader
+          title="Notifikasi"
+          right={unread > 0 ? <Badge tone="info">{unread} baru</Badge> : undefined}
+        />
         {notifs.length === 0 ? (
-          <p className="text-sm text-gray-500">Tidak ada notifikasi.</p>
+          <p className="text-sm text-slate-500">Belum ada notifikasi.</p>
         ) : (
-          <ul className="mt-2 space-y-2">
+          <ul className="divide-y divide-slate-100">
             {notifs.map((n) => (
-              <li key={n.id} className="flex items-start justify-between gap-2 text-sm">
-                <span className={n.readAt ? "text-gray-500" : "font-medium"}>
-                  {n.title}: {n.body}
-                </span>
+              <li key={n.id} className="flex items-start justify-between gap-2 py-2">
+                <div className="min-w-0">
+                  <p className={`text-sm ${n.readAt ? "text-slate-500" : "font-medium text-slate-800"}`}>
+                    {n.title}
+                  </p>
+                  <p className="text-xs text-slate-500">{n.body}</p>
+                </div>
                 {!n.readAt && (
-                  <button
-                    type="button"
-                    className="shrink-0 rounded bg-gray-100 px-2 py-0.5 text-xs"
-                    onClick={() => markNotifRead(n.id)}
-                  >
+                  <Button variant="ghost" size="sm" className="shrink-0" onClick={() => markNotifRead(n.id)}>
                     Tandai dibaca
-                  </button>
+                  </Button>
                 )}
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </Card>
 
       {/* Attendance history */}
-      <div id="absensi-ortu" className="scroll-mt-20 rounded-xl border bg-white p-4">
-        <h3 className="text-sm font-semibold">Riwayat Absensi</h3>
-        <ul className="mt-2 space-y-1 text-sm">
-          {attendance.map((a) => (
-            <li key={a.id} className="flex justify-between">
-              <span>{a.attendanceDate}</span>
-              <span>{STATUS_LABEL[a.status] ?? a.status}</span>
-            </li>
-          ))}
-          {attendance.length === 0 && (
-            <li className="text-gray-500">Belum ada catatan absensi.</li>
-          )}
-        </ul>
-      </div>
+      <Card id="absensi-ortu">
+        <SectionHeader title="Riwayat Absensi" />
+        {attendance.length === 0 ? (
+          <p className="text-sm text-slate-500">Belum ada catatan absensi.</p>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {attendance.map((a) => {
+              const st = attendanceStatus(a.status);
+              return (
+                <li key={a.id} className="flex items-center justify-between py-1.5 text-sm">
+                  <span className="text-slate-600">{a.attendanceDate}</span>
+                  <Badge tone={st.tone}>{st.label}</Badge>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
 
       {/* Nilai (published only) */}
-      <div id="nilai-ortu" className="scroll-mt-20 rounded-xl border bg-white p-4">
-        <h3 className="text-sm font-semibold">Nilai</h3>
-        <ul className="mt-2 space-y-1 text-sm">
-          {grades.map((gr) => (
-            <li key={gr.id} className="flex justify-between">
-              <span>{gr.subject} — {gr.assessmentName}</span>
-              <span className={gr.isBelowKkm ? "text-red-600" : "text-green-700"}>
-                {gr.score}/{gr.maxScore} {gr.isBelowKkm ? "(di bawah KKM)" : "(memenuhi KKM)"}
-              </span>
-            </li>
-          ))}
-          {grades.length === 0 && <li className="text-gray-500">Belum ada nilai dipublikasikan.</li>}
-        </ul>
-      </div>
+      <Card id="nilai-ortu">
+        <SectionHeader title="Nilai" />
+        {grades.length === 0 ? (
+          <p className="text-sm text-slate-500">Belum ada nilai dibagikan.</p>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {grades.map((gr) => {
+              const kkm = kkmView(gr.isBelowKkm);
+              return (
+                <li key={gr.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
+                  <span className="min-w-0 truncate text-slate-700">
+                    {gr.subject} — {gr.assessmentName}
+                  </span>
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    <span className="font-medium text-slate-700">
+                      {gr.score}/{gr.maxScore}
+                    </span>
+                    <Badge tone={kkm.tone}>{kkm.label}</Badge>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
 
       {/* Catatan (published only) */}
-      <div id="catatan-ortu" className="scroll-mt-20 rounded-xl border bg-white p-4">
-        <h3 className="text-sm font-semibold">Catatan dari Guru</h3>
-        <ul className="mt-2 space-y-1 text-sm">
-          {pubNotes.map((nt) => (
-            <li key={nt.id}>
-              <span className="text-xs text-gray-500">[{nt.category}]</span> {nt.body}
-            </li>
-          ))}
-          {pubNotes.length === 0 && <li className="text-gray-500">Belum ada catatan dibagikan.</li>}
-        </ul>
-      </div>
+      <Card id="catatan-ortu">
+        <SectionHeader title="Catatan dari Guru" />
+        {pubNotes.length === 0 ? (
+          <p className="text-sm text-slate-500">Belum ada catatan dibagikan.</p>
+        ) : (
+          <ul className="space-y-2">
+            {pubNotes.map((nt) => (
+              <li key={nt.id} className="text-sm text-slate-700">
+                <Badge tone="neutral">{nt.category}</Badge> <span className="align-middle">{nt.body}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
 
       {/* Messages */}
-      <div id="pesan-guru" className="scroll-mt-20 rounded-xl border bg-white p-4">
-        <h3 className="text-sm font-semibold">Pesan Guru</h3>
-        <ul className="mt-2 space-y-1 text-sm">
-          {threads.map((t) => (
-            <li key={t.id}>
-              <button
-                type="button"
-                className="text-blue-600 underline"
-                onClick={() => openThread(t.id)}
-              >
+      <Card id="pesan-guru">
+        <SectionHeader title="Pesan Guru" />
+        {threads.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {threads.map((t) => (
+              <Button key={t.id} variant="secondary" size="sm" onClick={() => openThread(t.id)}>
                 Lihat percakapan
-              </button>
-            </li>
-          ))}
-        </ul>
-        {thread && (
-          <div className="mt-2 max-h-40 space-y-1 overflow-auto rounded bg-gray-50 p-2 text-sm">
-            {thread.messages.map((m) => (
-              <div key={m.id}>
-                <span className="text-xs text-gray-500">{m.senderRole}:</span> {m.body}
-              </div>
+              </Button>
             ))}
           </div>
         )}
-        <div className="mt-2 flex gap-2">
-          <input
-            className="flex-1 rounded border px-2 py-1 text-sm"
+        {thread && (
+          <div className="mb-2 max-h-48 space-y-2 overflow-auto rounded-lg bg-slate-50 p-2.5">
+            {thread.messages.map((m) => {
+              const fromParent = m.senderRole === "orang_tua";
+              return (
+                <div
+                  key={m.id}
+                  className={`max-w-[85%] rounded-lg px-2.5 py-1.5 text-sm ${
+                    fromParent ? "ml-auto bg-brand-600 text-white" : "bg-white text-slate-700 shadow-card"
+                  }`}
+                >
+                  {m.body}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <div className="flex gap-2">
+          <Input
             placeholder="Tulis pesan untuk guru…"
             value={reply}
             onChange={(e) => setReply(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") sendMessage();
+            }}
           />
-          <button
-            type="button"
-            className="rounded bg-blue-600 px-3 py-1 text-sm text-white"
-            onClick={sendMessage}
-          >
+          <Button onClick={sendMessage} disabled={!reply.trim()}>
             Kirim
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

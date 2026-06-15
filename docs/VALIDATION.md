@@ -309,3 +309,44 @@ pnpm validate
   classified message `cannot reach http://localhost:8787 — is the API running?`
   and exit code 2. To run it for real: set a live `DATABASE_URL`, `pnpm db:migrate`,
   `pnpm db:seed`, `pnpm dev:api`, then `pnpm smoke:live`.
+
+## Sprint 010 — Pilot UX & Visual Productization
+
+Frontend-first productization sprint: a lightweight visual system + polished app
+shell, teacher, parent, and admin surfaces. No backend route/schema/auth change.
+The automated suite is unchanged at **110 tests**.
+
+### What changed (frontend + seed)
+
+- Tailwind `brand` tokens + base styles (`tailwind.config.js`, `apps/web/src/index.css`).
+- Shared primitives `apps/web/src/components/ui.tsx` and status maps
+  `apps/web/src/components/status.ts`; all web surfaces refactored to use them.
+- Seed (`packages/db/src/seed.ts`) gained small idempotent demo content for the
+  existing School A child (one attendance record, one published grade, one
+  published note, one parent→teacher message) via existing tested service
+  functions — no new schema, no mock layer.
+
+### Results (this environment)
+
+- `pnpm install` — ok.
+- `pnpm test` — **110/110 passing** (unchanged).
+- `pnpm typecheck` — clean across all packages.
+- `pnpm --filter @soka/web build` — succeeds (CSS ~18 kB).
+- `pnpm validate` — succeeds (exit 0).
+
+### Visual QA
+
+Verified with a built-in web server (`vite preview` over the production build)
+and Playwright screenshots, using mocked API responses for authenticated views
+(no live DB needed):
+
+- Login — desktop (1366×768) and mobile (390×844).
+- Teacher Papan Pagi — desktop and mobile (attendance buttons fit 5-per-row on
+  mobile; numbered order preserved).
+- Parent home — mobile (reassurance-first; published-only data).
+- Admin / Setup — desktop (overview checklist, all six sections) and the
+  Guru/Admin role switcher.
+
+No text overflow, overlap, broken buttons, or dead navigation observed. A live
+end-to-end walkthrough still requires `pnpm dev:api` + `pnpm dev:web` against a
+seeded database (see `docs/PILOT_SMOKE_CHECKLIST.md`).

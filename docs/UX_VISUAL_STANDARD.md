@@ -78,3 +78,46 @@ Orang Tua:
 - Avoid admin-dashboard density.
 
 Do not force one generic layout system across both roles.
+
+## Sprint 010 Frontend Conventions (apps/web)
+
+Sprint 010 productized the web UI. Concrete conventions now in code:
+
+### Tokens
+
+- Tailwind v3 with a `brand` indigo scale (`tailwind.config.js`); primary action =
+  `brand-600`.
+- Warm-neutral page surface (`bg-stone-50`) set in `apps/web/src/index.css`; cards
+  are white with a subtle `shadow-card` and `rounded-xl2` (~14px) corners.
+- Consistent focus ring (`ring-brand-400`) applied globally via `*:focus-visible`.
+
+### Shared primitives (`apps/web/src/components/ui.tsx`)
+
+`Button` (primary/secondary/ghost/danger × sm/md), `Card`, `SectionHeader`
+(supports a numbered `step` badge for the Papan Pagi order), `Badge`, `Notice`,
+`Input`, `Select`, `Field` (label + hint + error), `EmptyState`, `Loading`, and
+`NavChips`. Reuse these instead of ad-hoc utility-class clusters.
+
+### Status → label/tone mapping (`apps/web/src/components/status.ts`)
+
+Raw backend enums are never shown to users. Helpers map them to Indonesian
+labels + a semantic tone (badge colour): attendance (`hadir`→success,
+`terlambat`→warning, `alpa`→danger, `sakit`/`izin`→info), attendance completion,
+grade/note visibility, KKM met/below, parent-link-code status, and workspace
+labels. Tones: `neutral|brand|success|warning|danger|info`.
+
+### Layout rules
+
+- Shell width caps at `max-w-4xl` (teacher/admin) and `max-w-md` (parent,
+  mobile-first). Sticky header shows SOKA + school + active-workspace badge;
+  on mobile the school context drops to a second line so nothing overflows.
+- Role switcher renders only the workspaces a user actually has (segmented,
+  stable width). Sign-out keeps the Sprint 007 behavior (local state cleared
+  only after the server sign-out succeeds; error + retry otherwise).
+- Teacher Papan Pagi keeps the fixed numbered order (1 Absensi status, 2 Pesan
+  Ortu, 3 Siswa Perlu Perhatian, 4 Jadwal); attendance uses tone-coloured
+  segmented status buttons with a "Tersimpan" badge per student.
+- Parent home leads with a reassurance summary card (green when calm, amber when
+  action is needed) before detail cards. Only published grades/notes appear.
+- Avoid: heavy UI frameworks, decorative gradients/orbs/hero sections, nested
+  cards, dead navigation, and raw enum/log text in the UI.

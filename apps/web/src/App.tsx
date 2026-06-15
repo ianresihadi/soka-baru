@@ -8,6 +8,7 @@ import {
 } from "./api";
 import { AppShell } from "./AppShell";
 import { LoginPanel } from "./LoginPanel";
+import { Loading } from "./components/ui";
 
 /**
  * Root of the SOKA web app. Resolves the session first: unauthenticated users
@@ -70,8 +71,8 @@ export function App() {
 
   if (phase === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <p className="text-sm text-slate-500">Memuat…</p>
+      <div className="flex min-h-screen items-center justify-center">
+        <Loading label="Memuat SOKA…" />
       </div>
     );
   }
