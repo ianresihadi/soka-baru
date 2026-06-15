@@ -5,13 +5,20 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is merged and accepted via PR #7.
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is merged and accepted via PR #7. Sprint 009: Pilot Environment / Live Smoke Hardening is detailed and ready for Builder pre-edit implementation planning.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Architect Layer: Sprint 008 is accepted after PR #7 merge. There is no active Builder sprint. Next step is to choose and detail Sprint 009 before Claude starts new implementation.
+Builder Layer: Sprint 009 Pilot Environment / Live Smoke Hardening is ready for Claude pre-edit implementation planning. Claude must start from `planning/sprints/009-pilot-environment-live-smoke-hardening/claude-start-prompt.md`, produce a plan first, and wait for Ian approval before editing files.
+
+## Sprint 009 Handoff Notes (Architect)
+
+- Detailed Sprint 009 requirements, blueprint, acceptance criteria, handoff prompt, Claude start prompt, and placeholder completion notes.
+- Sprint 009 scope is pilot live-path proof: environment validation, live HTTP smoke script, Better Auth cookie/session verification, live migrate/seed runbook hardening, validation command hardening, and setup/smoke docs.
+- Sprint 009 should not add product breadth. It explicitly defers Pengumuman, browser/native push delivery, provider-specific deployment automation, CI/CD redesign, new modules, auth bypasses, role behavior changes, and Sprint 010.
+- Builder may add small scripts under `scripts/` and package scripts such as `check:env` and `smoke:live`, but should keep them dependency-light and safe for local/live rehearsal.
 
 ## Sprint 008 Build Notes (Builder)
 
@@ -246,9 +253,9 @@ Architect Layer: Sprint 008 is accepted after PR #7 merge. There is no active Bu
 
 ## Next Actions
 
-- Decide Sprint 009 direction before moving Claude again.
-- Recommended default: detail Sprint 009 as Pilot Environment / Live Smoke Hardening, focused on proving Neon + Better Auth + seed + documented admin/teacher/parent smoke paths in a deployed-like setup.
-- Alternative: detail Sprint 009 as Pengumuman only if the pilot sales/use-case requires school/class announcements before environment hardening.
+- Move to Claude with `planning/sprints/009-pilot-environment-live-smoke-hardening/claude-start-prompt.md`.
+- Ask Claude to read the required files and produce the pre-edit implementation plan only.
+- Bring Claude's plan back to Architect if it adds product modules, Pengumuman, push delivery, provider lock-in, auth bypasses, permission changes, role behavior changes, or schema changes not justified by live-smoke hardening.
 - Optional immediate manual verification remains useful: run `pnpm db:migrate` + `pnpm db:seed` against a live Neon `DATABASE_URL` and walk `docs/PILOT_SMOKE_CHECKLIST.md` end-to-end.
 
 ## Blockers

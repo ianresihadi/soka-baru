@@ -1,7 +1,6 @@
 # Sprint 008 Completion Notes: Admin Setup UI Hardening
 
-Status: Implemented by Builder on branch `claude/sprint-008-admin-setup`. Ready
-for Architect review. PR not merged.
+Status: Merged and accepted via PR #7.
 
 ## Admin workspace changes
 
