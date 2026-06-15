@@ -5,13 +5,13 @@
 
 ## Current Status
 
-Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is merged and accepted via PR #7. Sprint 009: Pilot Environment / Live Smoke Hardening is merged and accepted via PR #8. Sprint 010: Pilot UX & Visual Productization is implemented by Builder on branch `claude/sprint-010-pilot-ux` and ready for Architect review (PR not yet opened).
+Sprint 001: Discovery & Architecture is complete. Sprint 002: Foundation Data/Auth is merged and accepted. Sprint 003: Admin Onboarding Minimal is merged and accepted. Sprint 004: Guru Daily Loop is merged and accepted. Sprint 005: Parent Trust Loop is merged and accepted. Sprint 006: Nilai & Catatan is merged and accepted. The initial 001-006 roadmap is complete. Sprint 007: Pilot Readiness & App Shell is merged and accepted. Sprint 008: Admin Setup UI Hardening is merged and accepted via PR #7. Sprint 009: Pilot Environment / Live Smoke Hardening is merged and accepted via PR #8. Sprint 010: Pilot UX & Visual Productization is implemented by Builder on branch `claude/sprint-010-pilot-ux`; PR #9 is open and ready for Architect review.
 
 The user approved using `C:\Users\USER\Documents\SOKA` as the new project operating folder, treating SOKA Lama's `docs/SOKA-MAP` as migration material, retiring `docs/SOKA-MAP/` as an active documentation format, and keeping the relic catalog as guardrails only.
 
 ## Active Phase
 
-Builder Layer: Sprint 010 Pilot UX & Visual Productization is implemented on branch `claude/sprint-010-pilot-ux` and awaiting Architect review. Ian approved the pre-edit plan (token/primitive refactor of the listed web components + a small idempotent seed enrichment). No backend route/schema/auth/role/tenant/parent-visibility change. No PR opened yet.
+Builder Layer: Sprint 010 Pilot UX & Visual Productization is implemented on branch `claude/sprint-010-pilot-ux` with PR #9 open and ready for Architect review. Ian approved the pre-edit plan (token/primitive refactor of the listed web components + a small idempotent seed enrichment). No backend route/schema/auth/role/tenant/parent-visibility change.
 
 ## Sprint 010 Build Notes (Builder)
 
@@ -24,7 +24,7 @@ Builder Layer: Sprint 010 Pilot UX & Visual Productization is implemented on bra
 
 ## Next Actions (Sprint 010)
 
-- Open the Sprint 010 PR to `main` and request Architect review (credible pilot feel; teacher task-first; parent reassurance-first/mobile; admin guided not full-TU; permissions/visibility intact; validation + visual QA documented).
+- PR #9 is open for Architect review (credible pilot feel; teacher task-first; parent reassurance-first/mobile; admin guided not full-TU; permissions/visibility intact; validation + visual QA documented). Architect accepted in principle (docs-only cleanup applied); awaiting merge.
 - Optional live check by Ian: seed, start API/web, walk `docs/PILOT_SMOKE_CHECKLIST.md` incl. the Visual walkthrough.
 - Do not start Sprint 011 until Sprint 010 is accepted.
 

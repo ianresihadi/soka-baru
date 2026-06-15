@@ -1,7 +1,8 @@
 # Sprint 010 Completion Notes: Pilot UX & Visual Productization
 
-Status: Implemented by Builder on branch `claude/sprint-010-pilot-ux`. Ready for
-Architect review. PR not yet opened.
+Status: Implemented by Builder on branch `claude/sprint-010-pilot-ux`. PR #9 is
+open and ready for Architect review (accepted in principle; docs-only cleanup
+applied). Not yet merged.
 
 ## Builder Summary
 
